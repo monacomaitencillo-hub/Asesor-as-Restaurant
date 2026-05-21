@@ -30,15 +30,6 @@ const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(__dirname));
 
-app.get('/api/health', (req, res) => {
-  res.json({
-    ok: !firebaseInitError,
-    error: firebaseInitError,
-    hasServiceAccount: !!process.env.FIREBASE_SERVICE_ACCOUNT,
-    hasClientConfig: !!process.env.FIREBASE_CLIENT_CONFIG,
-    serviceAccountLength: process.env.FIREBASE_SERVICE_ACCOUNT?.length
-  });
-});
 
 // ─── Auth Middleware ──────────────────────────────────────────────────────────
 async function requireAuth(req, res, next) {
