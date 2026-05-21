@@ -24,7 +24,7 @@ if (serviceAccount) {
   admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
 }
 const db = serviceAccount ? admin.firestore() : null;
-const TS = admin.firestore.FieldValue.serverTimestamp;
+const TS = () => admin.firestore.FieldValue.serverTimestamp();
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
