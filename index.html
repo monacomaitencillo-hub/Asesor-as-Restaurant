@@ -1,0 +1,3593 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Asesorías Restaurantes</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #ff5023;
+      --primary-dark: #d94018;
+      --sidebar-bg: #16213e;
+      --sidebar-hover: #1a2a50;
+      --sidebar-active: #ff5023;
+      --sidebar-text: #a0aec0;
+      --sidebar-width: 240px;
+      --header-h: 56px;
+      --bg: #f4f6f9;
+      --card: #ffffff;
+      --text: #2d3748;
+      --muted: #718096;
+      --border: #e2e8f0;
+      --success: #38a169;
+      --warning: #d69e2e;
+      --danger: #e53e3e;
+      --radius: 10px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--text); }
+
+    /* ── Login ─────────────────────────────────────────────────────────── */
+    #login-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+    }
+    .login-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .login-logo {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .login-logo .brand-icon {
+      width: 56px;
+      height: 56px;
+      background: var(--primary);
+      border-radius: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      color: #fff;
+      margin-bottom: 12px;
+    }
+    .login-logo h1 { font-size: 1.3rem; font-weight: 800; color: var(--text); }
+    .login-logo p { font-size: 0.85rem; color: var(--muted); }
+    .btn-primary-custom {
+      background: var(--primary);
+      border: none;
+      color: #fff;
+      font-weight: 700;
+      padding: 12px;
+      border-radius: 8px;
+      width: 100%;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-primary-custom:hover { background: var(--primary-dark); }
+
+    /* ── App Layout ─────────────────────────────────────────────────────── */
+    #app { display: none; }
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      width: var(--sidebar-width);
+      height: 100vh;
+      background: var(--sidebar-bg);
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+      transition: transform 0.3s;
+    }
+    .sidebar-brand {
+      padding: 18px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .sidebar-brand .brand-icon {
+      width: 34px; height: 34px;
+      background: var(--primary);
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: #fff;
+      margin-right: 10px;
+    }
+    .sidebar-brand span { color: #fff; font-weight: 800; font-size: 0.9rem; }
+    .sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 0; }
+    .nav-section-label {
+      padding: 16px 20px 6px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(160,174,192,0.5);
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 20px;
+      color: var(--sidebar-text);
+      font-size: 0.87rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 0;
+      transition: all 0.15s;
+      border-left: 3px solid transparent;
+    }
+    .nav-item:hover { background: var(--sidebar-hover); color: #fff; }
+    .nav-item.active { background: rgba(255,80,35,0.12); color: var(--primary); border-left-color: var(--primary); }
+    .nav-item i { font-size: 1rem; width: 18px; text-align: center; }
+    .nav-badge {
+      margin-left: auto;
+      background: var(--danger);
+      color: #fff;
+      font-size: 0.7rem;
+      padding: 1px 7px;
+      border-radius: 20px;
+      font-weight: 700;
+    }
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .user-info { display: flex; align-items: center; gap: 10px; }
+    .user-avatar {
+      width: 32px; height: 32px;
+      background: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+    .user-email { color: var(--sidebar-text); font-size: 0.78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+    .btn-logout { background: none; border: none; color: var(--sidebar-text); cursor: pointer; padding: 4px; border-radius: 6px; }
+    .btn-logout:hover { color: var(--danger); background: rgba(229,62,62,0.1); }
+
+    /* ── Main Content ───────────────────────────────────────────────────── */
+    .main-content {
+      margin-left: var(--sidebar-width);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .top-header {
+      height: var(--header-h);
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .hamburger { display: none; background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--text); }
+    .page-title { font-size: 1rem; font-weight: 700; color: var(--text); }
+    .content-area { padding: 24px; flex: 1; }
+
+    /* ── Section ────────────────────────────────────────────────────────── */
+    .section { display: none; }
+    .section.active { display: block; }
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .section-header h2 { font-size: 1.25rem; font-weight: 800; }
+
+    /* ── Cards ──────────────────────────────────────────────────────────── */
+    .card { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .card-body { padding: 20px; }
+
+    /* ── Stats ──────────────────────────────────────────────────────────── */
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 20px; }
+    .stat-card { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); padding: 18px 20px; }
+    .stat-label { font-size: 0.78rem; color: var(--muted); font-weight: 600; margin-bottom: 6px; }
+    .stat-value { font-size: 1.7rem; font-weight: 800; }
+    .stat-value.danger { color: var(--danger); }
+    .stat-value.warning { color: var(--warning); }
+    .stat-value.success { color: var(--success); }
+
+    /* ── Table ──────────────────────────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    th { background: #f8fafc; color: var(--muted); font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 10px 14px; text-align: left; border-bottom: 2px solid var(--border); }
+    td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafbfc; }
+
+    /* ── Buttons ────────────────────────────────────────────────────────── */
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 0.86rem; font-weight: 700; cursor: pointer; border: none; transition: all 0.15s; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .btn-outline:hover { background: var(--bg); }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover { background: #c53030; }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-success:hover { background: #276749; }
+    .btn-sm { padding: 5px 10px; font-size: 0.8rem; }
+    .btn-icon { width: 32px; height: 32px; padding: 0; justify-content: center; border-radius: 6px; }
+
+    /* ── Search ─────────────────────────────────────────────────────────── */
+    .search-box {
+      display: flex; align-items: center;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0 12px;
+      gap: 8px;
+    }
+    .search-box i { color: var(--muted); }
+    .search-box input { border: none; background: transparent; padding: 8px 0; font-size: 0.87rem; outline: none; color: var(--text); width: 220px; font-family: inherit; }
+
+    /* ── Form ───────────────────────────────────────────────────────────── */
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 0.82rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .form-control {
+      width: 100%; padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.88rem;
+      color: var(--text);
+      font-family: inherit;
+      transition: border-color 0.15s;
+      background: #fff;
+    }
+    .form-control:focus { outline: none; border-color: var(--primary); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    /* ── Modal ──────────────────────────────────────────────────────────── */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: #fff;
+      border-radius: 14px;
+      width: 100%;
+      max-width: 560px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    .modal-box.modal-lg { max-width: 760px; }
+    .modal-header {
+      padding: 20px 24px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-header h3 { font-size: 1.1rem; font-weight: 800; }
+    .modal-body { padding: 20px 24px; }
+    .modal-footer { padding: 0 24px 20px; display: flex; gap: 10px; justify-content: flex-end; }
+    .btn-close-modal { background: none; border: none; font-size: 1.3rem; color: var(--muted); cursor: pointer; }
+    .btn-close-modal:hover { color: var(--text); }
+
+    /* ── Badge ──────────────────────────────────────────────────────────── */
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+    .badge-danger { background: rgba(229,62,62,0.1); color: var(--danger); }
+    .badge-success { background: rgba(56,161,105,0.1); color: var(--success); }
+    .badge-warning { background: rgba(214,158,46,0.1); color: var(--warning); }
+    .badge-gray { background: #f0f0f0; color: var(--muted); }
+
+    /* ── Margin bar ─────────────────────────────────────────────────────── */
+    .margin-bar-wrap { width: 100px; }
+    .margin-bar { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; margin-top: 4px; }
+    .margin-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+
+    /* ── Alert card ─────────────────────────────────────────────────────── */
+    .alert-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 18px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: #fff;
+      margin-bottom: 10px;
+    }
+    .alert-card.resolved { opacity: 0.5; }
+    .alert-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+    .alert-icon.danger { background: rgba(229,62,62,0.1); color: var(--danger); }
+    .alert-icon.success { background: rgba(56,161,105,0.1); color: var(--success); }
+    .alert-info { flex: 1; }
+    .alert-msg { font-size: 0.87rem; font-weight: 600; }
+    .alert-date { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+
+    /* ── Stock list (nuevo diseño) ──────────────────────────────────────── */
+    .stock-cat-header {
+      font-size: 0.72rem; font-weight: 700; color: var(--muted);
+      letter-spacing: 1px; text-transform: uppercase;
+      padding: 20px 0 8px; border-bottom: 1px solid var(--border);
+    }
+    .stock-row {
+      display: flex; align-items: center; gap: 16px;
+      padding: 13px 0; border-bottom: 1px solid var(--border);
+    }
+    .stock-row-info { flex: 1; min-width: 0; }
+    .stock-row-name { font-size: 0.95rem; font-weight: 700; }
+    .stock-row-provs { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+    .stock-prov-pill {
+      font-size: 0.72rem; padding: 1px 8px;
+      border: 1px solid #d0d5dd; border-radius: 20px; color: var(--muted);
+    }
+    .stock-row-actual { font-size: 0.88rem; color: var(--muted); min-width: 30px; text-align: right; }
+    .stock-row-input {
+      width: 100px; padding: 8px 10px; border: 1.5px solid var(--border);
+      border-radius: 8px; font-size: 0.9rem; font-family: inherit;
+      text-align: center; background: #fff; color: var(--muted);
+    }
+    .stock-row-input:focus { outline: none; border-color: var(--primary); color: var(--text); }
+    .stock-row-unit { font-size: 0.85rem; color: var(--muted); min-width: 44px; }
+
+    /* ── Inventario accordion ───────────────────────────────────────────── */
+    .inv-acc-card { background:#fff; border:1px solid var(--border); border-radius:var(--radius); margin-bottom:10px; overflow:hidden; }
+    .inv-acc-header { display:flex; align-items:center; gap:14px; padding:16px 20px; cursor:pointer; }
+    .inv-acc-header:hover { background:#fafafa; }
+    .inv-acc-date { font-weight:800; font-size:1rem; min-width:110px; }
+    .inv-acc-email { color:var(--muted); font-size:0.85rem; flex:1; }
+    .inv-acc-count { font-size:0.85rem; color:var(--muted); white-space:nowrap; }
+    .inv-acc-chevron { color:var(--muted); font-size:1rem; transition:transform .2s; margin-left:8px; }
+    .inv-acc-chevron.open { transform:rotate(180deg); }
+    .inv-acc-body { display:none; border-top:1px solid var(--border); padding:0 20px 16px; }
+    .inv-acc-body.open { display:block; }
+    .inv-det-cat { font-size:0.72rem; font-weight:700; color:var(--muted); letter-spacing:1px; text-transform:uppercase; padding:16px 0 6px; border-bottom:1px solid var(--border); }
+    .inv-det-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); font-size:0.9rem; }
+    .inv-det-qty { color:var(--primary); font-weight:700; }
+
+    /* ── Inventario items (legacy) ──────────────────────────────────────── */
+    .inv-item-row { display:flex; gap:10px; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); }
+    .inv-item-name { flex:1; font-size:0.87rem; font-weight:600; }
+    .inv-item-unit { font-size:0.78rem; color:var(--muted); width:40px; text-align:center; }
+    .inv-item-input { width:90px; }
+
+    /* ── Toast ──────────────────────────────────────────────────────────── */
+    #toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+    .toast-msg {
+      background: #1a202c;
+      color: #fff;
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-size: 0.87rem;
+      font-weight: 600;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      display: flex; align-items: center; gap: 10px;
+      min-width: 240px;
+      animation: slideIn 0.2s ease;
+    }
+    .toast-msg.success { border-left: 4px solid var(--success); }
+    .toast-msg.error { border-left: 4px solid var(--danger); }
+    @keyframes slideIn { from { transform: translateX(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+    /* ── Empty state ────────────────────────────────────────────────────── */
+    .empty-state { text-align: center; padding: 48px 20px; color: var(--muted); }
+    .empty-state i { font-size: 2.5rem; margin-bottom: 12px; display: block; }
+    .empty-state p { font-size: 0.9rem; }
+
+    /* ── Loader ─────────────────────────────────────────────────────────── */
+    .spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-overlay { display: flex; align-items: center; justify-content: center; padding: 40px; }
+    .spinner-dark { border-color: rgba(0,0,0,0.1); border-top-color: var(--primary); }
+
+    /* ── Sidebar overlay (mobile) ───────────────────────────────────────── */
+    #sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99; }
+
+    /* ── Tabs ───────────────────────────────────────────────────────────────── */
+    .tab-bar { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 20px; }
+    .tab-item { padding: 10px 22px; font-weight: 700; font-size: 0.9rem; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s; }
+    .tab-item:hover { color: var(--text); }
+    .tab-item.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+    /* ── Recipe cards ───────────────────────────────────────────────────────── */
+    .recipes-grid { display: grid; gap: 14px; }
+    .recipes-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+    .recipes-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+    .recipes-grid.cols-6 { grid-template-columns: repeat(6, 1fr); }
+
+    .recipe-card { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; }
+    .recipe-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 4px; }
+    .recipe-card-name { font-weight: 800; font-size: 0.9rem; line-height: 1.3; flex: 1; }
+    .recipe-card-actions { display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
+    .recipe-card-sub { font-size: 0.78rem; color: var(--muted); margin-bottom: 8px; }
+    .recipe-card-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 10px; min-height: 22px; }
+    .recipe-card-tag { font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+    .recipe-card-tag.metodo { background: rgba(100,150,250,0.1); color: #4a6cf7; }
+    .recipe-card-tag.cat { background: rgba(56,161,105,0.1); color: #2d8a5e; }
+    .recipe-card-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; border-top: 1px solid var(--border); padding-top: 10px; margin-top: auto; }
+    .recipe-stat-label { font-size: 0.65rem; color: var(--muted); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+    .recipe-stat-val { font-size: 0.95rem; font-weight: 800; margin-top: 2px; }
+
+    .mrg-pill { font-size: 0.8rem; font-weight: 800; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+    .mrg-pill.high { background: rgba(56,161,105,0.12); color: #2d8a5e; }
+    .mrg-pill.mid { background: rgba(214,158,46,0.12); color: #b7791f; }
+    .mrg-pill.low { background: rgba(229,62,62,0.12); color: #c53030; }
+
+    .cols-btn-group { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .cols-btn { padding: 6px 12px; background: transparent; border: none; font-size: 0.85rem; font-weight: 700; cursor: pointer; color: var(--muted); }
+    .cols-btn.active { background: var(--text); color: #fff; }
+
+    /* ── Drawer ─────────────────────────────────────────────────────────────── */
+    .drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 300; }
+    .drawer-overlay.open { display: block; }
+    .drawer { position: fixed; right: 0; top: 0; bottom: 0; width: 600px; max-width: 100vw; background: #fff; z-index: 301; overflow-y: auto; box-shadow: -4px 0 40px rgba(0,0,0,0.15); transform: translateX(100%); transition: transform 0.3s ease; display: flex; flex-direction: column; }
+    .drawer.open { transform: none; }
+    .drawer-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: #fff; z-index: 1; flex-shrink: 0; }
+    .drawer-header h3 { font-size: 1.1rem; font-weight: 800; }
+    .drawer-body { padding: 24px; flex: 1; }
+    .drawer-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; position: sticky; bottom: 0; background: #fff; flex-shrink: 0; }
+
+    /* ── Ingredient rows in drawer ──────────────────────────────────────────── */
+    .drw-ing-row { margin-bottom: 10px; }
+    .drw-ing-main { display: flex; gap: 8px; align-items: center; }
+    .drw-ing-badge { font-size: 0.7rem; font-weight: 700; padding: 4px 9px; border-radius: 6px; white-space: nowrap; flex-shrink: 0; }
+    .drw-ing-badge.tipo-ingrediente { background: rgba(74,108,247,0.1); color: #4a6cf7; }
+    .drw-ing-badge.tipo-preparacion { background: rgba(156,39,176,0.1); color: #9c27b0; }
+    .drw-ing-select { flex: 2; min-width: 0; }
+    .drw-ing-cant { width: 86px; flex-shrink: 0; }
+    .drw-ing-unit { font-size: 0.78rem; color: var(--muted); width: 36px; text-align: center; flex-shrink: 0; }
+    .drw-ing-cost { font-size: 0.75rem; color: var(--muted); margin-top: 3px; padding-left: 74px; }
+
+    .drw-cost-box { background: var(--bg); border-radius: 10px; padding: 14px 16px; margin-top: 16px; }
+    .drw-cost-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 0.88rem; }
+    .drw-cost-row:last-child { margin: 0; }
+    .drw-cost-label { color: var(--muted); font-weight: 600; }
+    .drw-cost-val { font-weight: 800; font-size: 1rem; }
+
+    /* ── Responsive ─────────────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: none; }
+      #sidebar-overlay.open { display: block; }
+      .main-content { margin-left: 0; }
+      .hamburger { display: block; }
+      .form-row { grid-template-columns: 1fr; }
+      .stock-grid { grid-template-columns: 1fr; }
+      .info-grid { grid-template-columns: 1fr !important; }
+    }
+
+    /* ── Checkbox list ──────────────────────────────────────────────────────────── */
+    .checkbox-list { border: 1px solid var(--border); border-radius: 8px; max-height: 180px; overflow-y: auto; }
+    .checkbox-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--border); cursor: pointer; }
+    .checkbox-item:last-child { border-bottom: none; }
+    .checkbox-item:hover { background: var(--bg); }
+    .checkbox-item input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
+    .checkbox-item label { font-size: 0.88rem; font-weight: 600; cursor: pointer; margin: 0; }
+
+    /* ── Price history ──────────────────────────────────────────────────────────── */
+    .ph-form-box { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+    .ph-entry { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; margin-bottom: 10px; display: flex; align-items: center; gap: 16px; }
+    .ph-entry-mes { font-size: 0.85rem; font-weight: 700; color: var(--muted); min-width: 60px; }
+    .ph-entry-main { flex: 1; }
+    .ph-entry-costo { font-size: 1rem; font-weight: 800; color: var(--success); margin-bottom: 4px; }
+    .ph-entry-meta { font-size: 0.78rem; color: var(--muted); display: flex; gap: 12px; flex-wrap: wrap; }
+    .ph-entry-badge { background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 2px 10px; font-size: 0.72rem; font-weight: 700; color: var(--text); }
+    .ph-preview { background: rgba(56,161,105,0.08); border: 1px solid rgba(56,161,105,0.2); border-radius: 8px; padding: 12px 14px; margin-top: 12px; font-size: 0.88rem; }
+
+    /* ── Edit view ──────────────────────────────────────────────────────────────── */
+    .edit-view-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════ LOGIN ═══════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="brand-icon"><i class="bi bi-shop"></i></div>
+      <h1>Asesorías Restaurantes</h1>
+      <p>Plataforma de administración</p>
+    </div>
+    <form id="login-form">
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" id="login-email" class="form-control" placeholder="usuario@email.com" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contraseña</label>
+        <input type="password" id="login-password" class="form-control" placeholder="••••••••" required />
+      </div>
+      <div id="login-error" style="color:var(--danger);font-size:0.83rem;margin-bottom:12px;display:none"></div>
+      <button type="submit" class="btn-primary-custom" id="login-btn">Ingresar</button>
+      <div style="text-align:center;margin-top:16px">
+        <a href="#" style="font-size:0.85rem;color:var(--muted);text-decoration:none" onclick="sendPasswordReset(event)">¿Olvidaste tu contraseña?</a>
+      </div>
+    </form>
+
+    <div style="display:flex;align-items:center;gap:12px;margin:20px 0">
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+      <span style="font-size:0.8rem;color:var(--muted)">o</span>
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+    </div>
+
+    <button id="btn-google" onclick="loginWithGoogle()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:11px;border:1.5px solid var(--border);border-radius:10px;background:#fff;font-family:inherit;font-size:0.92rem;font-weight:700;cursor:pointer;transition:background .15s" onmouseover="this.style.background='#f8f8f8'" onmouseout="this.style.background='#fff'">
+      <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+      Continuar con Google
+    </button>
+
+    <div id="reset-msg" style="display:none;margin-top:12px;padding:10px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:0.85rem;color:#166534;text-align:center"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ APP ════════ -->
+<div id="app">
+  <!-- Sidebar overlay (mobile) -->
+  <div id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon"><i class="bi bi-shop"></i></div>
+      <span>Asesorías</span>
+    </div>
+
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Inventario</div>
+      <div class="nav-item" data-section="categorias">
+        <i class="bi bi-tags"></i> Categorías
+      </div>
+      <div class="nav-item" data-section="areas">
+        <i class="bi bi-diagram-3"></i> Áreas
+      </div>
+      <div class="nav-item" data-section="unidades">
+        <i class="bi bi-rulers"></i> Unidades
+      </div>
+      <div class="nav-item" data-section="ingredientes">
+        <i class="bi bi-box-seam"></i> Ingredientes
+      </div>
+      <div class="nav-item" data-section="proveedores">
+        <i class="bi bi-truck"></i> Proveedores
+      </div>
+      <div class="nav-item" data-section="alertas">
+        <i class="bi bi-bell"></i> Alertas
+        <span class="nav-badge" id="alertas-badge" style="display:none">0</span>
+      </div>
+
+      <div class="nav-section-label">Operaciones</div>
+      <div class="nav-item" data-section="inventarios">
+        <i class="bi bi-clipboard-data"></i> Inventarios
+      </div>
+
+      <div class="nav-section-label">Costos</div>
+      <div class="nav-item" data-section="margenes">
+        <i class="bi bi-graph-up-arrow"></i> Márgenes
+      </div>
+      <div class="nav-item" data-section="gastos">
+        <i class="bi bi-cash-stack"></i> Gastos Fijos
+      </div>
+
+      <div class="nav-section-label">Asesoría</div>
+      <div class="nav-item" data-section="reuniones">
+        <i class="bi bi-journal-text"></i> Reuniones
+      </div>
+
+      <div class="nav-section-label">Configuración</div>
+      <div class="nav-item" data-section="usuarios">
+        <i class="bi bi-people"></i> Usuarios
+      </div>
+      <div class="nav-item" data-section="info">
+        <i class="bi bi-building"></i> Info Restaurante
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar" id="user-avatar">?</div>
+        <span class="user-email" id="user-email-display">—</span>
+        <button class="btn-logout" onclick="logout()" title="Cerrar sesión">
+          <i class="bi bi-box-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <div class="main-content">
+    <!-- Superadmin: selector de restaurante -->
+    <div id="superadmin-bar" style="display:none;background:#1a2a50;padding:8px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <i class="bi bi-shield-check" style="color:#ff5023;font-size:1rem"></i>
+      <span style="color:#a0aec0;font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Superadmin</span>
+      <select id="cliente-select" onchange="selectCliente(this.value)" style="background:#0f1c35;color:#fff;border:1.5px solid rgba(255,255,255,0.2);border-radius:8px;padding:5px 12px;font-size:0.85rem;font-weight:600;cursor:pointer;outline:none;min-width:180px"></select>
+    </div>
+
+    <div class="top-header">
+      <button class="hamburger" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+      <span class="page-title" id="page-title">Ingredientes</span>
+    </div>
+
+    <div class="content-area">
+
+      <!-- ════════ UNIDADES ════════ -->
+      <div class="section" id="s-unidades">
+        <div class="section-header">
+          <h2>Unidades de medida</h2>
+          <button class="btn btn-primary" onclick="openUnidadModal()">
+            <i class="bi bi-plus"></i> Nueva unidad
+          </button>
+        </div>
+        <div class="card" style="max-width:520px">
+          <div class="card-body" style="padding:0">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>Nombre</th><th>Abreviatura</th><th style="width:80px"></th></tr>
+                </thead>
+                <tbody id="unidad-table-body">
+                  <tr><td colspan="3"><div class="loading-overlay"><div class="spinner spinner-dark"></div></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ CATEGORÍAS ════════ -->
+      <div class="section" id="s-categorias">
+        <div class="section-header">
+          <h2>Categorías</h2>
+          <button class="btn btn-primary" onclick="openCatModal()">
+            <i class="bi bi-plus"></i> Nueva categoría
+          </button>
+        </div>
+        <div class="card" style="max-width:520px">
+          <div class="card-body" style="padding:0">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>Nombre</th><th style="width:80px"></th></tr>
+                </thead>
+                <tbody id="cat-table-body">
+                  <tr><td colspan="2"><div class="loading-overlay"><div class="spinner spinner-dark"></div></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ INGREDIENTES ════════ -->
+      <div class="section" id="s-ingredientes">
+
+        <!-- Vista lista -->
+        <div id="ing-list-view">
+          <div class="section-header">
+            <h2>Ingredientes</h2>
+            <button class="btn btn-primary" onclick="openIngEdit()">
+              <i class="bi bi-plus"></i> Nuevo ingrediente
+            </button>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px">
+            <div class="search-box">
+              <i class="bi bi-search"></i>
+              <input type="text" id="ing-search" placeholder="Buscar ingrediente..." oninput="filterIngredientes()" />
+            </div>
+            <select id="ing-filter-cat" class="form-control" style="width:auto;padding:8px 14px" onchange="filterIngredientes()">
+              <option value="">Todas las categorías</option>
+            </select>
+            <select id="ing-filter-prov" class="form-control" style="width:auto;padding:8px 14px" onchange="filterIngredientes()">
+              <option value="">Todos los proveedores</option>
+            </select>
+            <span id="ing-count" style="margin-left:auto;font-size:0.85rem;color:var(--muted)"></span>
+          </div>
+          <div class="card">
+            <div class="card-body" style="padding:0">
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Nombre</th>
+                      <th>Categoría</th>
+                      <th>Unidad</th>
+                      <th>Tipo impuesto</th>
+                      <th>Costo actual</th>
+                      <th>Stock Mín.</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="ing-table-body">
+                    <tr><td colspan="7"><div class="loading-overlay"><div class="spinner spinner-dark"></div></div></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vista edición -->
+        <div id="ing-edit-view" style="display:none">
+          <div class="edit-view-header">
+            <div style="display:flex;align-items:center;gap:12px">
+              <button class="btn btn-outline btn-sm" onclick="showIngList()">
+                <i class="bi bi-arrow-left"></i> Volver
+              </button>
+              <h3 id="ing-edit-title" style="font-size:1.1rem;font-weight:800;margin:0">Nuevo Ingrediente</h3>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-outline" onclick="showIngList()">Cancelar</button>
+              <button class="btn btn-primary" onclick="saveIngrediente()">
+                <i class="bi bi-check-lg"></i> Guardar
+              </button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-body">
+              <input type="hidden" id="ing-id" />
+
+              <!-- Nombre + Categoría -->
+              <div class="form-row" style="margin-bottom:16px">
+                <div class="form-group" style="margin:0">
+                  <label class="form-label">Nombre</label>
+                  <input type="text" id="ing-nombre" class="form-control" placeholder="Ej: Aceite de oliva" />
+                </div>
+                <div class="form-group" style="margin:0">
+                  <label class="form-label">Categoría</label>
+                  <select id="ing-categoria" class="form-control">
+                    <option value="">— Sin categoría —</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Unidad + Tipo impuesto + Capacidad CC -->
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px">
+                <div class="form-group" style="margin:0">
+                  <label class="form-label">Unidad de medida</label>
+                  <select id="ing-unidad" class="form-control">
+                    <option value="">— Seleccionar —</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin:0">
+                  <label class="form-label">Tipo de impuesto</label>
+                  <select id="ing-impuesto" class="form-control">
+                    <option value="alimento">Alimento (IVA 19%)</option>
+                    <option value="carne">Carne (IVA+imp.carne 24%)</option>
+                    <option value="cerveza_vino">Cerveza / Vino (IVA+ILA 39.5%)</option>
+                    <option value="licor">Licor (IVA+ILA 50.5%)</option>
+                    <option value="bebida_azucarada">Bebida azucarada (IVA+IABA 37%)</option>
+                    <option value="bebida_sin_azucar">Bebida sin azúcar (IVA+IABA 29%)</option>
+                    <option value="harina">Harina (IVA+imp. 31%)</option>
+                    <option value="sin_impuesto">Sin impuesto (0%)</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin:0">
+                  <label class="form-label">Capacidad botella (cc)</label>
+                  <input type="number" id="ing-capacidad" class="form-control" placeholder="Ej: 750" min="0" />
+                </div>
+              </div>
+
+              <!-- Proveedores + Stock mínimo -->
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+                <div class="form-group" style="margin:0">
+                  <label class="form-label">Proveedores</label>
+                  <div id="ing-prov-checks" class="checkbox-list">
+                    <div style="padding:12px 14px;color:var(--muted);font-size:0.85rem">Cargando proveedores...</div>
+                  </div>
+                </div>
+                <div class="form-group" style="margin:0">
+                  <label class="form-label">Stock mínimo</label>
+                  <input type="number" id="ing-stock-min" class="form-control" min="0" step="0.1" placeholder="0" />
+                  <div style="font-size:0.78rem;color:var(--muted);margin-top:6px">Se generará alerta cuando el stock caiga por debajo de este valor.</div>
+                </div>
+              </div>
+
+              <!-- Inventario: toggle + áreas -->
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:4px">
+                <div class="form-group" style="margin:0">
+                  <label class="form-label">¿Aparece en inventarios?</label>
+                  <label style="display:flex;align-items:center;gap:10px;margin-top:8px;cursor:pointer">
+                    <input type="checkbox" id="ing-en-inventario" style="width:18px;height:18px;accent-color:var(--primary)" />
+                    <span style="font-size:0.88rem">Sí, incluir en inventarios</span>
+                  </label>
+                </div>
+                <div class="form-group" style="margin:0" id="ing-areas-group">
+                  <label class="form-label">Áreas donde aparece</label>
+                  <div id="ing-area-checks" class="checkbox-list">
+                    <div style="padding:12px 14px;color:var(--muted);font-size:0.85rem">Cargando áreas...</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Historial de precios (solo visible cuando editando un ingrediente existente) -->
+          <div id="ing-precios-section" style="margin-top:20px;display:none">
+            <div class="card">
+              <div class="card-body">
+                <h4 style="font-weight:800;font-size:1rem;margin-bottom:4px">Historial de precios</h4>
+                <p style="font-size:0.82rem;color:var(--muted);margin-bottom:20px">
+                  Ingresá el precio neto de factura. El costo unitario se calcula automáticamente.
+                </p>
+
+                <!-- Formulario nuevo precio -->
+                <div class="ph-form-box">
+                  <input type="hidden" id="ph-editing-id" />
+                  <div class="form-row" style="margin-bottom:14px">
+                    <div class="form-group" style="margin:0">
+                      <label class="form-label" style="font-size:0.75rem;letter-spacing:0.05em">MES</label>
+                      <input type="month" id="ph-mes" class="form-control" />
+                    </div>
+                    <div class="form-group" style="margin:0">
+                      <label class="form-label" style="font-size:0.75rem;letter-spacing:0.05em">PRECIO NETO ($)</label>
+                      <div style="display:flex">
+                        <span style="padding:9px 10px;background:var(--bg);border:1px solid var(--border);border-right:none;border-radius:8px 0 0 8px;color:var(--muted)">$</span>
+                        <input type="number" id="ph-precio-neto" class="form-control" style="border-radius:0 8px 8px 0" placeholder="0" min="0" oninput="recalcPH()" />
+                      </div>
+                    </div>
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:14px">
+                    <div class="form-group" style="margin:0">
+                      <label class="form-label" style="font-size:0.75rem;letter-spacing:0.05em">DESCUENTO (%)</label>
+                      <input type="number" id="ph-descuento" class="form-control" value="0" min="0" max="100" oninput="recalcPH()" />
+                    </div>
+                    <div class="form-group" style="margin:0">
+                      <label class="form-label" style="font-size:0.75rem;letter-spacing:0.05em">CANTIDAD COMPRA</label>
+                      <input type="number" id="ph-cantidad" class="form-control" value="1" min="0.001" step="0.001" oninput="recalcPH()" />
+                    </div>
+                    <div class="form-group" style="margin:0">
+                      <label class="form-label" style="font-size:0.75rem;letter-spacing:0.05em">DESCRIPCIÓN COMPRA</label>
+                      <input type="text" id="ph-descripcion" class="form-control" placeholder="Ej: caja x 6" />
+                    </div>
+                    <div class="form-group" style="margin:0">
+                      <label class="form-label" style="font-size:0.75rem;letter-spacing:0.05em">FLETE NETO ($)</label>
+                      <input type="number" id="ph-flete" class="form-control" value="0" min="0" oninput="recalcPH()" />
+                    </div>
+                  </div>
+                  <div id="ph-preview"></div>
+                  <div style="margin-top:14px">
+                    <button class="btn btn-primary" onclick="agregarPrecio()">Agregar</button>
+                    <button class="btn btn-outline" id="ph-cancel-edit-btn" style="display:none;margin-left:8px" onclick="cancelEditPrecio()">Cancelar edición</button>
+                  </div>
+                </div>
+
+                <!-- Lista historial -->
+                <div id="ph-lista"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ════════ PROVEEDORES ════════ -->
+      <div class="section" id="s-proveedores">
+        <div class="section-header">
+          <h2>Proveedores</h2>
+          <div style="display:flex;gap:10px;align-items:center">
+            <div class="search-box">
+              <i class="bi bi-search"></i>
+              <input type="text" id="prov-search" placeholder="Buscar proveedor..." oninput="filterProveedores()" />
+            </div>
+            <button class="btn btn-primary" onclick="openProvModal()">
+              <i class="bi bi-plus"></i> Nuevo
+            </button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body" style="padding:0">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Teléfono</th>
+                    <th>Email</th>
+                    <th>Notas</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="prov-table-body">
+                  <tr><td colspan="5"><div class="loading-overlay"><div class="spinner spinner-dark"></div></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ ALERTAS ════════ -->
+      <div class="section" id="s-alertas">
+        <div class="section-header">
+          <h2>Alertas</h2>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-outline btn-sm" id="btn-alertas-activas" onclick="setAlertaFilter(false)">Activas</button>
+            <button class="btn btn-outline btn-sm" id="btn-alertas-resueltas" onclick="setAlertaFilter(true)">Resueltas</button>
+          </div>
+        </div>
+        <div id="alertas-list">
+          <div class="loading-overlay"><div class="spinner spinner-dark"></div></div>
+        </div>
+      </div>
+
+      <!-- ════════ INVENTARIOS ════════ -->
+      <div class="section" id="s-inventarios">
+        <div class="tab-bar">
+          <div class="tab-item active" id="tab-inv-historial" onclick="switchInvTab('historial')">Registro de Inventarios</div>
+          <div class="tab-item" id="tab-inv-stock" onclick="switchInvTab('stock')">Añadir Stock</div>
+        </div>
+
+        <!-- ── TAB HISTORIAL ── -->
+        <div id="inv-tab-historial">
+          <h3 style="font-weight:800;margin-bottom:20px">Historial de inventarios</h3>
+          <div id="inv-accordion">
+            <div class="loading-overlay"><div class="spinner spinner-dark"></div></div>
+          </div>
+        </div>
+
+        <!-- ── TAB AÑADIR STOCK ── -->
+        <div id="inv-tab-stock" style="display:none">
+          <div style="max-width:860px">
+            <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px;gap:16px;flex-wrap:wrap">
+              <div>
+                <div style="font-size:0.72rem;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">FECHA DEL INVENTARIO</div>
+                <input type="date" id="stock-fecha" class="form-control" style="max-width:200px" />
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                <div class="search-box">
+                  <i class="bi bi-search"></i>
+                  <input type="text" id="stock-search" placeholder="Buscar..." oninput="filterStockList()" />
+                </div>
+                <select id="stock-filter-area" class="form-control" style="width:auto;padding:8px 14px" onchange="filterStockList()">
+                  <option value="">Todas las áreas</option>
+                </select>
+                <button class="btn btn-primary" onclick="saveStock()">
+                  <i class="bi bi-check-lg"></i> Guardar
+                </button>
+              </div>
+            </div>
+            <div id="stock-list">
+              <div class="loading-overlay"><div class="spinner spinner-dark"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ MÁRGENES ════════ -->
+      <div class="section" id="s-margenes">
+        <!-- Tabs -->
+        <div class="tab-bar">
+          <div class="tab-item active" id="tab-recetas" onclick="switchMrgTab('recetas')">Recetas</div>
+          <div class="tab-item" id="tab-preparaciones" onclick="switchMrgTab('preparaciones')">Preparaciones</div>
+        </div>
+
+        <!-- ─ RECETAS ─ -->
+        <div id="mrg-tab-recetas">
+          <div class="section-header">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <div class="search-box">
+                <i class="bi bi-search"></i>
+                <input type="text" id="mrg-search" placeholder="Buscar receta..." oninput="filterRecetas()" />
+              </div>
+              <select class="form-control" id="mrg-filter-cat" style="width:auto;padding:8px 12px" onchange="filterRecetas()">
+                <option value="">Todas las categorías</option>
+              </select>
+              <select class="form-control" id="mrg-filter-mrg" style="width:auto;padding:8px 12px" onchange="filterRecetas()">
+                <option value="">Todos los márgenes</option>
+                <option value="high">Sobre 70%</option>
+                <option value="mid">50% – 70%</option>
+                <option value="low">Bajo 50%</option>
+              </select>
+              <div class="cols-btn-group">
+                <button class="cols-btn active" id="col-btn-3" onclick="setMrgCols(3)">3</button>
+                <button class="cols-btn" id="col-btn-4" onclick="setMrgCols(4)">4</button>
+                <button class="cols-btn" id="col-btn-6" onclick="setMrgCols(6)">6</button>
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="openRecetaDrawer()">
+              <i class="bi bi-plus"></i> Agregar receta
+            </button>
+          </div>
+          <div class="stats-row" style="margin-bottom:16px">
+            <div class="stat-card"><div class="stat-label">Total recetas</div><div class="stat-value" id="stat-recetas">—</div></div>
+            <div class="stat-card"><div class="stat-label">Margen promedio</div><div class="stat-value" id="stat-mrg-prom">—</div></div>
+            <div class="stat-card"><div class="stat-label">Bajo 50%</div><div class="stat-value danger" id="stat-bajo50">—</div></div>
+            <div class="stat-card"><div class="stat-label">Sobre 70%</div><div class="stat-value success" id="stat-sobre70">—</div></div>
+          </div>
+          <div class="recipes-grid cols-3" id="recetas-grid">
+            <div style="grid-column:1/-1"><div class="loading-overlay"><div class="spinner spinner-dark"></div></div></div>
+          </div>
+        </div>
+
+        <!-- ─ PREPARACIONES ─ -->
+        <div id="mrg-tab-preparaciones" style="display:none">
+          <div class="section-header">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <div class="search-box">
+                <i class="bi bi-search"></i>
+                <input type="text" id="prep-search" placeholder="Buscar preparación..." oninput="filterPreps()" />
+              </div>
+              <div class="cols-btn-group">
+                <button class="cols-btn active" id="prep-col-btn-3" onclick="setPrepCols(3)">3</button>
+                <button class="cols-btn" id="prep-col-btn-4" onclick="setPrepCols(4)">4</button>
+                <button class="cols-btn" id="prep-col-btn-6" onclick="setPrepCols(6)">6</button>
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="openPrepDrawer()">
+              <i class="bi bi-plus"></i> Agregar preparación
+            </button>
+          </div>
+          <div class="recipes-grid cols-3" id="preps-grid">
+            <div style="grid-column:1/-1"><div class="loading-overlay"><div class="spinner spinner-dark"></div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ GASTOS FIJOS ════════ -->
+      <div class="section" id="s-gastos">
+        <div class="section-header">
+          <h2>Gastos Fijos</h2>
+          <button class="btn btn-primary" onclick="openGastoModal()">
+            <i class="bi bi-plus"></i> Agregar Gasto
+          </button>
+        </div>
+
+        <!-- Resumen -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px">
+          <div class="card">
+            <div class="card-body" style="padding:20px">
+              <div style="font-size:0.8rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Total Mensual</div>
+              <div id="gasto-total-mensual" style="font-size:1.8rem;font-weight:800;margin-top:4px">$0</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-body" style="padding:20px">
+              <div style="font-size:0.8rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Total Anual</div>
+              <div id="gasto-total-anual" style="font-size:1.8rem;font-weight:800;margin-top:4px">$0</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-body" style="padding:20px">
+              <div style="font-size:0.8rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px">N° de gastos</div>
+              <div id="gasto-count" style="font-size:1.8rem;font-weight:800;margin-top:4px">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body" style="padding:0">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Categoría</th>
+                    <th>Frecuencia</th>
+                    <th>Monto</th>
+                    <th>Equiv. Mensual</th>
+                    <th>Notas</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="gasto-table-body">
+                  <tr><td colspan="7"><div class="loading-overlay"><div class="spinner spinner-dark"></div></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ REUNIONES ════════ -->
+      <div class="section" id="s-reuniones">
+        <div class="section-header">
+          <h2>Reuniones de Asesoría</h2>
+          <button class="btn btn-primary" onclick="openReuModal()">
+            <i class="bi bi-plus"></i> Nueva Reunión
+          </button>
+        </div>
+
+        <!-- Lista -->
+        <div id="reu-list-view">
+          <div class="card">
+            <div class="card-body" style="padding:0">
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Título</th>
+                      <th>Temas tratados</th>
+                      <th>Compromisos</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="reu-table-body">
+                    <tr><td colspan="5"><div class="loading-overlay"><div class="spinner spinner-dark"></div></div></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Formulario (panel) -->
+        <div id="reu-form-view" style="display:none">
+          <div class="section-header" style="margin-bottom:12px">
+            <button class="btn btn-outline btn-sm" onclick="showReuList()">
+              <i class="bi bi-arrow-left"></i> Volver
+            </button>
+            <h3 id="reu-form-title" style="font-size:1rem;font-weight:800">Nueva Reunión</h3>
+          </div>
+          <div class="card">
+            <div class="card-body">
+              <input type="hidden" id="reu-id" />
+              <div class="form-row" style="margin-bottom:16px">
+                <div class="form-group" style="margin:0">
+                  <label class="form-label">Fecha</label>
+                  <input type="date" id="reu-fecha" class="form-control" />
+                </div>
+                <div class="form-group" style="margin:0">
+                  <label class="form-label">Título / Descripción breve</label>
+                  <input type="text" id="reu-titulo" class="form-control" placeholder="Ej: Reunión semanal semana 3" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Temas tratados</label>
+                <textarea id="reu-temas" class="form-control" rows="4" placeholder="Ej: Se revisaron márgenes de hamburguesas. Costo de carne molida subió un 15%..."></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Compromisos / Próximos pasos</label>
+                <textarea id="reu-compromisos" class="form-control" rows="3" placeholder="Ej: Cliente sube precio Juicy Luci a $8.500. Revisar proveedor de lácteos..."></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Notas adicionales</label>
+                <textarea id="reu-notas" class="form-control" rows="2" placeholder="Notas libres..."></textarea>
+              </div>
+              <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:8px">
+                <button class="btn btn-outline" onclick="showReuList()">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveReunion()">
+                  <i class="bi bi-check-lg"></i> Guardar Reunión
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ ÁREAS ════════ -->
+      <div class="section" id="s-areas">
+        <div class="section-header">
+          <h2>Áreas de Inventario</h2>
+          <button class="btn btn-primary" onclick="openAreaModal()">
+            <i class="bi bi-plus"></i> Nueva área
+          </button>
+        </div>
+        <p style="color:var(--muted);font-size:0.88rem;margin-bottom:16px">
+          Define las áreas del restaurante (Cocina, Barra, Salón, Bodega, etc.) para clasificar ingredientes y filtrar inventarios.
+        </p>
+        <div class="card" style="max-width:520px">
+          <div class="card-body" style="padding:0">
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Nombre</th><th style="width:80px"></th></tr></thead>
+                <tbody id="area-table-body">
+                  <tr><td colspan="2"><div class="loading-overlay"><div class="spinner spinner-dark"></div></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ USUARIOS ════════ -->
+      <div class="section" id="s-usuarios">
+        <div class="section-header">
+          <h2>Usuarios</h2>
+          <button class="btn btn-primary" onclick="openUsuarioModal()">
+            <i class="bi bi-person-plus"></i> Agregar usuario
+          </button>
+        </div>
+        <p style="color:var(--muted);font-size:0.88rem;margin-bottom:16px">
+          Agrega usuarios para que puedan ingresar y hacer inventarios. El usuario debe tener una cuenta creada primero en la app.
+        </p>
+        <div class="card">
+          <div class="card-body" style="padding:0">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Email</th>
+                    <th>Nombre</th>
+                    <th>Rol</th>
+                    <th>Agregado por</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="usuario-table-body">
+                  <tr><td colspan="5"><div class="loading-overlay"><div class="spinner spinner-dark"></div></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ INFO RESTAURANTE ════════ -->
+      <div class="section" id="s-info">
+        <div class="section-header">
+          <h2>Información del Restaurante</h2>
+          <button class="btn btn-primary" onclick="saveInfo()">
+            <i class="bi bi-check-lg"></i> Guardar cambios
+          </button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px" class="info-grid">
+
+          <!-- Datos generales -->
+          <div class="card">
+            <div class="card-body">
+              <h5 style="font-weight:800;margin-bottom:16px;font-size:0.95rem;display:flex;align-items:center;gap:8px">
+                <i class="bi bi-shop" style="color:var(--primary)"></i> Datos del Local
+              </h5>
+              <div class="form-group">
+                <label class="form-label">Nombre del local</label>
+                <input type="text" id="info-nombre" class="form-control" placeholder="Ej: Restaurante Don Julio" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">RUT empresa</label>
+                <input type="text" id="info-rut" class="form-control" placeholder="Ej: 76.123.456-7" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Dirección</label>
+                <input type="text" id="info-direccion" class="form-control" placeholder="Ej: Av. Providencia 1234, Santiago" />
+              </div>
+              <div class="form-group" style="margin:0">
+                <label class="form-label">Concepto / Descripción</label>
+                <textarea id="info-concepto" class="form-control" rows="3" placeholder="Ej: Restaurante de cocina chilena tradicional con 20 años de trayectoria..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Contacto -->
+          <div class="card">
+            <div class="card-body">
+              <h5 style="font-weight:800;margin-bottom:16px;font-size:0.95rem;display:flex;align-items:center;gap:8px">
+                <i class="bi bi-telephone" style="color:var(--primary)"></i> Contacto
+              </h5>
+              <div class="form-group">
+                <label class="form-label"><i class="bi bi-telephone"></i> Teléfono</label>
+                <input type="tel" id="info-telefono" class="form-control" placeholder="+56 2 XXXX XXXX" />
+              </div>
+              <div class="form-group">
+                <label class="form-label"><i class="bi bi-whatsapp"></i> WhatsApp</label>
+                <input type="tel" id="info-whatsapp" class="form-control" placeholder="+56 9 XXXX XXXX" />
+              </div>
+              <div class="form-group">
+                <label class="form-label"><i class="bi bi-envelope"></i> Email</label>
+                <input type="email" id="info-email" class="form-control" placeholder="contacto@restaurante.cl" />
+              </div>
+              <div class="form-group" style="margin:0">
+                <label class="form-label"><i class="bi bi-clock"></i> Horario de atención</label>
+                <input type="text" id="info-horario" class="form-control" placeholder="Ej: Lun–Vie 12:00–23:00 / Sáb–Dom 12:00–00:00" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Redes sociales -->
+          <div class="card" style="grid-column:1/-1">
+            <div class="card-body">
+              <h5 style="font-weight:800;margin-bottom:16px;font-size:0.95rem;display:flex;align-items:center;gap:8px">
+                <i class="bi bi-share" style="color:var(--primary)"></i> Redes Sociales & Web
+              </h5>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
+                <div class="form-group" style="margin:0">
+                  <label class="form-label"><i class="bi bi-instagram"></i> Instagram</label>
+                  <div style="display:flex;align-items:center;gap:0">
+                    <span style="padding:9px 10px;background:var(--bg);border:1px solid var(--border);border-right:none;border-radius:8px 0 0 8px;font-size:0.85rem;color:var(--muted)">@</span>
+                    <input type="text" id="info-instagram" class="form-control" placeholder="nombre_restaurante" style="border-radius:0 8px 8px 0" />
+                  </div>
+                </div>
+                <div class="form-group" style="margin:0">
+                  <label class="form-label"><i class="bi bi-facebook"></i> Facebook</label>
+                  <input type="text" id="info-facebook" class="form-control" placeholder="facebook.com/restaurante" />
+                </div>
+                <div class="form-group" style="margin:0">
+                  <label class="form-label"><i class="bi bi-globe"></i> Sitio web</label>
+                  <input type="url" id="info-sitioweb" class="form-control" placeholder="www.restaurante.cl" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- /content-area -->
+  </div><!-- /main-content -->
+</div><!-- /app -->
+
+<!-- ══════════════════════════════════════════ MODALS ═════════════════════ -->
+
+<!-- Modal Unidad -->
+<div class="modal-overlay" id="modal-unidad">
+  <div class="modal-box" style="max-width:400px">
+    <div class="modal-header">
+      <h3 id="modal-unidad-title">Nueva unidad</h3>
+      <button class="btn-close-modal" onclick="closeModal('modal-unidad')"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="unidad-id" />
+      <div class="form-group">
+        <label class="form-label">Nombre</label>
+        <input type="text" id="unidad-nombre" class="form-control" placeholder="Ej: Kilogramo" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Abreviatura</label>
+        <input type="text" id="unidad-abrev" class="form-control" placeholder="Ej: kg" style="max-width:120px" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-unidad')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveUnidad()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Categoría -->
+<div class="modal-overlay" id="modal-cat">
+  <div class="modal-box" style="max-width:400px">
+    <div class="modal-header">
+      <h3 id="modal-cat-title">Nueva categoría</h3>
+      <button class="btn-close-modal" onclick="closeModal('modal-cat')"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="cat-id" />
+      <div class="form-group">
+        <label class="form-label">Nombre</label>
+        <input type="text" id="cat-nombre" class="form-control" placeholder="Ej: Proteínas, Lácteos, Verduras..." />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-cat')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveCat()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Proveedor -->
+<div class="modal-overlay" id="modal-prov">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="modal-prov-title">Nuevo Proveedor</h3>
+      <button class="btn-close-modal" onclick="closeModal('modal-prov')"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="prov-id" />
+      <div class="form-group">
+        <label class="form-label">Nombre *</label>
+        <input type="text" id="prov-nombre" class="form-control" placeholder="Ej: Distribuidora Central" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Teléfono</label>
+          <input type="tel" id="prov-telefono" class="form-control" placeholder="+56 9 XXXX XXXX" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" id="prov-email" class="form-control" placeholder="contacto@proveedor.com" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notas</label>
+        <textarea id="prov-notas" class="form-control" rows="3" placeholder="Condiciones de pago, días de entrega, etc."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-prov')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveProveedor()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal detalle Inventario -->
+<div class="modal-overlay" id="modal-inv-detail">
+  <div class="modal-box modal-lg">
+    <div class="modal-header">
+      <h3 id="modal-inv-title">Inventario</h3>
+      <button class="btn-close-modal" onclick="closeModal('modal-inv-detail')"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body" id="modal-inv-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-inv-detail')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ DRAWER RECETA ══════════════════ -->
+<div class="drawer-overlay" id="drw-receta-overlay" onclick="closeRecetaDrawer()"></div>
+<div class="drawer" id="drw-receta">
+  <div class="drawer-header">
+    <h3 id="drw-receta-title">Nueva Receta</h3>
+    <button class="btn-close-modal" onclick="closeRecetaDrawer()"><i class="bi bi-x-lg"></i></button>
+  </div>
+  <div class="drawer-body">
+    <input type="hidden" id="drw-r-id" />
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Nombre del producto *</label>
+        <input type="text" id="drw-r-nombre" class="form-control" placeholder="Ej: Pasta alfredo" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Categoría</label>
+        <input type="text" id="drw-r-cat" class="form-control" list="drw-r-cat-list" placeholder="Ej: Platos de fondo" />
+        <datalist id="drw-r-cat-list"></datalist>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Método / Subcategoría</label>
+      <input type="text" id="drw-r-metodo" class="form-control" placeholder="— Sin método —" />
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Precio de venta ($)</label>
+        <input type="number" id="drw-r-precio" class="form-control" min="0" step="1" placeholder="0" oninput="recalcDrwCost()" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Porciones que rinde</label>
+        <input type="number" id="drw-r-porciones" class="form-control" min="1" step="1" value="1" oninput="recalcDrwCost()" />
+      </div>
+    </div>
+
+    <!-- Ingredientes -->
+    <div class="form-group">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <label class="form-label" style="margin:0">Ingredientes</label>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-outline btn-sm" onclick="addDrwIngRow('ingrediente')">
+            <i class="bi bi-plus"></i> Ingrediente
+          </button>
+          <button class="btn btn-outline btn-sm" style="color:#9c27b0;border-color:#9c27b0" onclick="addDrwIngRow('preparacion')">
+            <i class="bi bi-plus"></i> Preparación
+          </button>
+        </div>
+      </div>
+      <div id="drw-r-ing-list"></div>
+    </div>
+
+    <!-- Costos calculados -->
+    <div class="drw-cost-box">
+      <div class="drw-cost-row">
+        <span class="drw-cost-label">Costo total</span>
+        <span class="drw-cost-val" id="drw-r-costo-total">$0</span>
+      </div>
+      <div class="drw-cost-row">
+        <span class="drw-cost-label">Costo por porción</span>
+        <span class="drw-cost-val" id="drw-r-costo-porcion">$0</span>
+      </div>
+      <div class="drw-cost-row" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+        <span class="drw-cost-label" style="font-size:0.95rem">Margen</span>
+        <span class="drw-cost-val" style="font-size:1.2rem" id="drw-r-margen">—%</span>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-top:16px">
+      <label class="form-label">Notas</label>
+      <textarea id="drw-r-notas" class="form-control" rows="2" placeholder="Observaciones, variantes..."></textarea>
+    </div>
+  </div>
+  <div class="drawer-footer">
+    <button class="btn btn-outline" onclick="closeRecetaDrawer()">Cancelar</button>
+    <button class="btn btn-primary" onclick="saveReceta()">Guardar</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ DRAWER PREPARACIÓN ═════════════ -->
+<div class="drawer-overlay" id="drw-prep-overlay" onclick="closePrepDrawer()"></div>
+<div class="drawer" id="drw-prep">
+  <div class="drawer-header">
+    <h3 id="drw-prep-title">Nueva Preparación</h3>
+    <button class="btn-close-modal" onclick="closePrepDrawer()"><i class="bi bi-x-lg"></i></button>
+  </div>
+  <div class="drawer-body">
+    <input type="hidden" id="drw-p-id" />
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Nombre *</label>
+        <input type="text" id="drw-p-nombre" class="form-control" placeholder="Ej: Salsa bechamel" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Categoría</label>
+        <input type="text" id="drw-p-cat" class="form-control" placeholder="Ej: Salsas" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Unidad de la preparación</label>
+        <select id="drw-p-unidad" class="form-control">
+          <option>porción</option><option>kg</option><option>g</option>
+          <option>l</option><option>ml</option><option>unidad</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Rendimiento (cuántas unidades produce)</label>
+        <input type="number" id="drw-p-rendimiento" class="form-control" min="0.01" step="0.01" value="1" oninput="recalcPrepCost()" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <label class="form-label" style="margin:0">Ingredientes</label>
+        <button class="btn btn-outline btn-sm" onclick="addDrwPrepIngRow()">
+          <i class="bi bi-plus"></i> Ingrediente
+        </button>
+      </div>
+      <div id="drw-p-ing-list"></div>
+    </div>
+
+    <div class="drw-cost-box">
+      <div class="drw-cost-row">
+        <span class="drw-cost-label">Costo total</span>
+        <span class="drw-cost-val" id="drw-p-costo-total">$0</span>
+      </div>
+      <div class="drw-cost-row">
+        <span class="drw-cost-label">Costo por unidad</span>
+        <span class="drw-cost-val" id="drw-p-costo-unidad">$0</span>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-top:16px">
+      <label class="form-label">Notas</label>
+      <textarea id="drw-p-notas" class="form-control" rows="2" placeholder="Observaciones..."></textarea>
+    </div>
+  </div>
+  <div class="drawer-footer">
+    <button class="btn btn-outline" onclick="closePrepDrawer()">Cancelar</button>
+    <button class="btn btn-primary" onclick="savePreparacion()">Guardar</button>
+  </div>
+</div>
+
+<!-- Modal Área -->
+<div class="modal-overlay" id="modal-area">
+  <div class="modal-box" style="max-width:380px">
+    <div class="modal-header">
+      <h3 id="modal-area-title">Nueva Área</h3>
+      <button class="btn-close-modal" onclick="closeModal('modal-area')"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="area-id" />
+      <div class="form-group">
+        <label class="form-label">Nombre *</label>
+        <input type="text" id="area-nombre" class="form-control" placeholder="Ej: Cocina, Barra, Salón, Bodega..." />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-area')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveArea()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Usuario -->
+<div class="modal-overlay" id="modal-usuario">
+  <div class="modal-box" style="max-width:440px">
+    <div class="modal-header">
+      <h3>Agregar Usuario</h3>
+      <button class="btn-close-modal" onclick="closeModal('modal-usuario')"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Email *</label>
+        <input type="email" id="usuario-email" class="form-control" placeholder="correo@ejemplo.com" />
+        <small style="color:var(--muted)">El usuario debe tener cuenta creada en la app previamente.</small>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Rol</label>
+        <select id="usuario-rol" class="form-control">
+          <option value="operador">Operador — puede hacer inventarios y ver datos</option>
+          <option value="admin">Administrador — acceso completo</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-usuario')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveUsuario()">Agregar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Gasto Fijo -->
+<div class="modal-overlay" id="modal-gasto">
+  <div class="modal-box" style="max-width:520px">
+    <div class="modal-header">
+      <h3 id="modal-gasto-title">Nuevo Gasto Fijo</h3>
+      <button class="btn-close-modal" onclick="closeModal('modal-gasto')"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="gasto-id" />
+      <div class="form-row">
+        <div class="form-group" style="flex:2">
+          <label class="form-label">Nombre *</label>
+          <input type="text" id="gasto-nombre" class="form-control" placeholder="Ej: Arriendo local" />
+        </div>
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Categoría</label>
+          <input type="text" id="gasto-categoria" class="form-control" placeholder="Ej: Arriendo, Servicios..." />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Monto ($) *</label>
+          <input type="number" id="gasto-monto" class="form-control" placeholder="0" min="0" step="1" />
+        </div>
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Frecuencia</label>
+          <select id="gasto-frecuencia" class="form-control">
+            <option value="mensual">Mensual</option>
+            <option value="semanal">Semanal</option>
+            <option value="anual">Anual</option>
+            <option value="bimestral">Bimestral</option>
+            <option value="trimestral">Trimestral</option>
+            <option value="diario">Diario</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notas</label>
+        <input type="text" id="gasto-notas" class="form-control" placeholder="Ej: Vence el 5 de cada mes" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-gasto')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveGasto()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- ══════════════════════════════════════════ SCRIPTS ════════════════════ -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+<script>
+// ═══════════════════════════════════════════════════════ STATE & GLOBALS ═══
+const state = {
+  user: null,
+  ingredientes: [],
+  proveedores: [],
+  stock: [],
+  margenes: [],
+  preparaciones: [],
+  categorias: [],
+  unidades: [],
+  areas: [],
+  alertas: [],
+  inventarios: [],
+  alertasFilter: false
+};
+
+let currentSection = 'ingredientes';
+
+// ═══════════════════════════════════════════════════════ FIREBASE INIT ════
+async function initFirebase() {
+  try {
+    const res = await fetch('/api/config');
+    if (!res.ok) throw new Error('No se pudo obtener la config de Firebase');
+    const config = await res.json();
+    firebase.initializeApp(config);
+    setupAuth();
+  } catch (e) {
+    document.getElementById('login-error').textContent = 'Error de configuración: ' + e.message;
+    document.getElementById('login-error').style.display = 'block';
+  }
+}
+
+function setupAuth() {
+  firebase.auth().onAuthStateChanged(async user => {
+    if (user) {
+      state.user = user;
+      const tokenResult = await user.getIdTokenResult(true);
+      if (tokenResult.claims.superadmin) {
+        _isSuperadmin = true;
+        showApp(user);
+        await loadSuperadminClientes();
+        return;
+      }
+      if (!tokenResult.claims.clienteId) {
+        showLogin();
+        showLoginError('Este usuario no tiene cliente asignado. Contactá al administrador.');
+        await firebase.auth().signOut();
+        return;
+      }
+      _isSuperadmin = false;
+      showApp(user);
+    } else {
+      showLogin();
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════ AUTH ═════════════
+function showLogin() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+}
+
+function showApp(user) {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('user-email-display').textContent = user.email;
+  document.getElementById('user-avatar').textContent = user.email[0].toUpperCase();
+  if (!_isSuperadmin) {
+    navigate('ingredientes');
+    loadAlertasBadge();
+  }
+}
+
+async function loadSuperadminClientes() {
+  try {
+    const token = await firebase.auth().currentUser?.getIdToken();
+    const res = await fetch('/api/superadmin/clientes', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const clientes = await res.json();
+
+    const bar = document.getElementById('superadmin-bar');
+    bar.style.display = 'flex';
+
+    const sel = document.getElementById('cliente-select');
+    sel.innerHTML = clientes.map(c => `<option value="${c.id}">${c.id}</option>`).join('');
+
+    // Seleccionar el primero automáticamente
+    if (clientes.length > 0) {
+      selectCliente(clientes[0].id);
+    }
+  } catch (e) { toast('Error cargando clientes: ' + e.message, 'error'); }
+}
+
+function selectCliente(clienteId) {
+  _selectedClienteId = clienteId;
+  const sel = document.getElementById('cliente-select');
+  if (sel) sel.value = clienteId;
+  // Resetear estado y cargar
+  Object.keys(state).forEach(k => {
+    if (Array.isArray(state[k])) state[k] = [];
+  });
+  navigate('ingredientes');
+  loadAlertasBadge();
+}
+
+function showLoginError(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+async function loginWithGoogle() {
+  const btn = document.getElementById('btn-google');
+  btn.disabled = true;
+  btn.style.opacity = '0.7';
+  document.getElementById('login-error').style.display = 'none';
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    await firebase.auth().signInWithPopup(provider);
+    // El onAuthStateChanged se encarga del resto (chequea clienteId claim)
+  } catch (err) {
+    if (err.code !== 'auth/popup-closed-by-user') {
+      showLoginError(err.message);
+    }
+  } finally {
+    btn.disabled = false;
+    btn.style.opacity = '1';
+  }
+}
+
+async function sendPasswordReset(e) {
+  e.preventDefault();
+  const email = document.getElementById('login-email').value.trim();
+  if (!email) {
+    showLoginError('Ingresá tu email primero para recuperar la contraseña.');
+    return;
+  }
+  try {
+    await firebase.auth().sendPasswordResetEmail(email);
+    document.getElementById('login-error').style.display = 'none';
+    const msg = document.getElementById('reset-msg');
+    msg.textContent = `Se envió un email a ${email} con el link para restablecer tu contraseña.`;
+    msg.style.display = 'block';
+  } catch (err) {
+    showLoginError(err.code === 'auth/user-not-found' ? 'No existe una cuenta con ese email.' : err.message);
+  }
+}
+
+document.getElementById('login-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('login-btn');
+  const email = document.getElementById('login-email').value;
+  const pass = document.getElementById('login-password').value;
+  document.getElementById('login-error').style.display = 'none';
+  btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled = true;
+  try {
+    await firebase.auth().signInWithEmailAndPassword(email, pass);
+  } catch (err) {
+    const msgs = {
+      'auth/invalid-credential': 'Email o contraseña incorrectos',
+      'auth/user-not-found': 'Usuario no encontrado',
+      'auth/wrong-password': 'Contraseña incorrecta',
+      'auth/too-many-requests': 'Demasiados intentos. Intentá más tarde.'
+    };
+    showLoginError(msgs[err.code] || err.message);
+  } finally {
+    btn.innerHTML = 'Ingresar';
+    btn.disabled = false;
+  }
+});
+
+async function logout() {
+  await firebase.auth().signOut();
+}
+
+// ═══════════════════════════════════════════════════════ API HELPER ════════
+let _selectedClienteId = null;
+let _isSuperadmin = false;
+
+async function api(method, path, body) {
+  const token = await firebase.auth().currentUser?.getIdToken();
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  };
+  if (_isSuperadmin && _selectedClienteId) {
+    headers['X-Cliente-Id'] = _selectedClienteId;
+  }
+  const res = await fetch('/api' + path, {
+    method, headers,
+    body: body ? JSON.stringify(body) : undefined
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Error desconocido');
+  return data;
+}
+
+// ═══════════════════════════════════════════════════════ NAVIGATION ════════
+const sectionTitles = {
+  unidades: 'Unidades de medida',
+  categorias: 'Categorías',
+  ingredientes: 'Ingredientes',
+  proveedores: 'Proveedores',
+  alertas: 'Alertas',
+  inventarios: 'Inventarios',
+  margenes: 'Márgenes',
+  gastos: 'Gastos Fijos',
+  reuniones: 'Reuniones de Asesoría',
+  areas: 'Áreas de Inventario',
+  usuarios: 'Usuarios',
+  info: 'Info Restaurante'
+};
+
+function navigate(section) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('s-' + section).classList.add('active');
+  document.querySelector(`.nav-item[data-section="${section}"]`)?.classList.add('active');
+  document.getElementById('page-title').textContent = sectionTitles[section];
+  currentSection = section;
+  closeSidebar();
+
+  if (section === 'unidades') loadUnidades();
+  if (section === 'categorias') loadCategorias();
+  if (section === 'ingredientes') loadIngredientes();
+  if (section === 'proveedores') loadProveedores();
+  if (section === 'alertas') loadAlertas();
+  if (section === 'inventarios') { loadInventarios(); loadStock(); }
+  if (section === 'margenes') loadMargenes();
+  if (section === 'gastos') loadGastos();
+  if (section === 'reuniones') loadReuniones();
+  if (section === 'areas') loadAreas();
+  if (section === 'usuarios') loadUsuarios();
+  if (section === 'info') loadInfo();
+}
+
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => navigate(item.dataset.section));
+});
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+
+// ═══════════════════════════════════════════════════════ MODALS ═══════════
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ═══════════════════════════════════════════════════════ TOAST ════════════
+function toast(msg, type = 'success') {
+  const c = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = `toast-msg ${type}`;
+  el.innerHTML = `<i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${msg}`;
+  c.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ═══════════════════════════════════════════════════════ UTILS ════════════
+function fmt(n) { return (parseFloat(n) || 0).toLocaleString('es-CL', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); }
+function fmtDec(n) { return (parseFloat(n) || 0).toLocaleString('es-CL', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); }
+function fmtPct(n) { return (parseFloat(n) || 0).toFixed(1) + '%'; }
+function fmtDate(ts) {
+  if (!ts) return '—';
+  const d = ts.toDate ? ts.toDate() : new Date(ts._seconds ? ts._seconds * 1000 : ts);
+  return d.toLocaleDateString('es-CL');
+}
+function marginColor(m) {
+  if (m >= 70) return 'var(--success)';
+  if (m >= 50) return 'var(--warning)';
+  return 'var(--danger)';
+}
+function marginBadge(m) {
+  if (m >= 70) return 'badge-success';
+  if (m >= 50) return 'badge-warning';
+  return 'badge-danger';
+}
+
+// ═══════════════════════════════════════════════════════ UNIDADES ════════════
+const UNIDADES_DEFAULT = [
+  { nombre: 'Kilogramo', abreviatura: 'kg' },
+  { nombre: 'Gramo', abreviatura: 'g' },
+  { nombre: 'Litro', abreviatura: 'L' },
+  { nombre: 'Mililitro', abreviatura: 'ml' },
+  { nombre: 'Unidad', abreviatura: 'un' },
+  { nombre: 'Caja', abreviatura: 'caja' },
+  { nombre: 'Bandeja', abreviatura: 'bandeja' },
+  { nombre: 'Bolsa', abreviatura: 'bolsa' },
+  { nombre: 'Lámina', abreviatura: 'lám' },
+  { nombre: 'Porción', abreviatura: 'porc' }
+];
+
+async function loadUnidades() {
+  try {
+    state.unidades = await api('GET', '/unidades');
+    // Si no hay ninguna, cargar las por defecto
+    if (!state.unidades.length) {
+      await Promise.all(UNIDADES_DEFAULT.map(u => api('POST', '/unidades', u)));
+      state.unidades = await api('GET', '/unidades');
+    }
+    renderUnidades();
+    syncUnidadSelect();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function renderUnidades() {
+  const tbody = document.getElementById('unidad-table-body');
+  if (!state.unidades.length) {
+    tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state"><i class="bi bi-rulers"></i><p>No hay unidades.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = state.unidades.map(u => `<tr>
+    <td><strong>${u.nombre}</strong></td>
+    <td><span class="badge badge-gray">${u.abreviatura}</span></td>
+    <td style="text-align:right">
+      <button class="btn btn-outline btn-sm btn-icon" onclick="openUnidadModal('${u.id}','${u.nombre.replace(/'/g,"\\'")}','${u.abreviatura}')"><i class="bi bi-pencil"></i></button>
+      <button class="btn btn-outline btn-sm btn-icon" onclick="deleteUnidad('${u.id}','${u.nombre.replace(/'/g,"\\'")}'')" style="margin-left:4px"><i class="bi bi-trash"></i></button>
+    </td>
+  </tr>`).join('');
+}
+
+function syncUnidadSelect() {
+  const sel = document.getElementById('ing-unidad');
+  if (!sel) return;
+  const current = sel.value;
+  sel.innerHTML = '<option value="">— Seleccionar —</option>' +
+    (state.unidades || []).map(u => `<option value="${u.abreviatura}">${u.nombre} (${u.abreviatura})</option>`).join('');
+  if (current) sel.value = current;
+}
+
+function openUnidadModal(id, nombre, abrev) {
+  document.getElementById('modal-unidad-title').textContent = id ? 'Editar unidad' : 'Nueva unidad';
+  document.getElementById('unidad-id').value = id || '';
+  document.getElementById('unidad-nombre').value = nombre || '';
+  document.getElementById('unidad-abrev').value = abrev || '';
+  openModal('modal-unidad');
+  setTimeout(() => document.getElementById('unidad-nombre').focus(), 100);
+}
+
+async function saveUnidad() {
+  const nombre = document.getElementById('unidad-nombre').value.trim();
+  const abreviatura = document.getElementById('unidad-abrev').value.trim();
+  if (!nombre) { toast('El nombre es requerido', 'error'); return; }
+  const id = document.getElementById('unidad-id').value;
+  try {
+    if (id) {
+      await api('PUT', '/unidades/' + id, { nombre, abreviatura });
+      toast('Unidad actualizada');
+    } else {
+      await api('POST', '/unidades', { nombre, abreviatura });
+      toast('Unidad creada');
+    }
+    closeModal('modal-unidad');
+    await loadUnidades();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteUnidad(id, nombre) {
+  if (!confirm(`¿Eliminar la unidad "${nombre}"?`)) return;
+  try {
+    await api('DELETE', '/unidades/' + id);
+    toast('Unidad eliminada');
+    await loadUnidades();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════ CATEGORÍAS ══════════
+async function loadCategorias() {
+  try {
+    state.categorias = await api('GET', '/categorias');
+    renderCategorias();
+    syncCatDatalist();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function renderCategorias() {
+  const tbody = document.getElementById('cat-table-body');
+  if (!state.categorias.length) {
+    tbody.innerHTML = `<tr><td colspan="2"><div class="empty-state"><i class="bi bi-tags"></i><p>No hay categorías. Creá la primera.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = state.categorias.map(c => `<tr>
+    <td><strong>${c.nombre}</strong></td>
+    <td style="text-align:right">
+      <button class="btn btn-outline btn-sm btn-icon" onclick="openCatModal('${c.id}','${c.nombre.replace(/'/g,"\\'")}')"><i class="bi bi-pencil"></i></button>
+      <button class="btn btn-outline btn-sm btn-icon" onclick="deleteCat('${c.id}','${c.nombre.replace(/'/g,"\\'")}'')" style="margin-left:4px"><i class="bi bi-trash"></i></button>
+    </td>
+  </tr>`).join('');
+}
+
+function syncCatDatalist() {
+  const sel = document.getElementById('ing-categoria');
+  if (!sel) return;
+  const current = sel.value;
+  sel.innerHTML = '<option value="">— Sin categoría —</option>' +
+    (state.categorias || []).map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
+  // También actualiza el datalist de recetas en márgenes
+  const dl = document.getElementById('drw-r-cat-list');
+  if (dl) dl.innerHTML = (state.categorias || []).map(c => `<option value="${c.nombre}">`).join('');
+  if (current) sel.value = current;
+}
+
+function openCatModal(id, nombre) {
+  document.getElementById('modal-cat-title').textContent = id ? 'Editar categoría' : 'Nueva categoría';
+  document.getElementById('cat-id').value = id || '';
+  document.getElementById('cat-nombre').value = nombre || '';
+  openModal('modal-cat');
+  setTimeout(() => document.getElementById('cat-nombre').focus(), 100);
+}
+
+async function saveCat() {
+  const nombre = document.getElementById('cat-nombre').value.trim();
+  if (!nombre) { toast('El nombre es requerido', 'error'); return; }
+  const id = document.getElementById('cat-id').value;
+  try {
+    if (id) {
+      await api('PUT', '/categorias/' + id, { nombre });
+      toast('Categoría actualizada');
+    } else {
+      await api('POST', '/categorias', { nombre });
+      toast('Categoría creada');
+    }
+    closeModal('modal-cat');
+    await loadCategorias();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteCat(id, nombre) {
+  if (!confirm(`¿Eliminar la categoría "${nombre}"?`)) return;
+  try {
+    await api('DELETE', '/categorias/' + id);
+    toast('Categoría eliminada');
+    await loadCategorias();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════ INGREDIENTES ══════
+const TIPOS_IMPUESTO = {
+  alimento: 'Alimento (IVA 19%)',
+  carne: 'Carne (IVA+imp.carne 24%)',
+  cerveza_vino: 'Cerveza / Vino (IVA+ILA 39.5%)',
+  licor: 'Licor (IVA+ILA 50.5%)',
+  bebida_azucarada: 'Bebida azucarada (IVA+IABA 37%)',
+  bebida_sin_azucar: 'Bebida sin azúcar (IVA+IABA 29%)',
+  harina: 'Harina (IVA+imp. 31%)',
+  sin_impuesto: 'Sin impuesto (0%)'
+};
+
+async function loadIngredientes() {
+  try {
+    const [ings, cats, unis, provs] = await Promise.all([
+      api('GET', '/ingredientes'),
+      state.categorias.length ? Promise.resolve(state.categorias) : api('GET', '/categorias'),
+      state.unidades.length ? Promise.resolve(state.unidades) : api('GET', '/unidades'),
+      state.proveedores.length ? Promise.resolve(state.proveedores) : api('GET', '/proveedores')
+    ]);
+    state.ingredientes = ings;
+    state.categorias = cats;
+    state.unidades = unis;
+    state.proveedores = provs;
+    renderIngredientes();
+    syncCatDatalist();
+    syncUnidadSelect();
+    populateIngSelects();
+    populateIngFilters();
+    filterIngredientes();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function renderIngredientes(list) {
+  const rows = (list || state.ingredientes);
+  const tbody = document.getElementById('ing-table-body');
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><i class="bi bi-box-seam"></i><p>No hay ingredientes. Creá el primero.</p></div></td></tr>`;
+    return;
+  }
+
+  const cats = [...new Set(rows.map(i => i.categoria).filter(Boolean))];
+  syncCatDatalist();
+
+  tbody.innerHTML = rows.map(ing => {
+    const provNombres = (ing.proveedorIds || [])
+      .map(id => state.proveedores.find(p => p.id === id)?.nombre)
+      .filter(Boolean).join(', ') || '—';
+    const impLabel = TIPOS_IMPUESTO[ing.tipoImpuesto] || ing.tipoImpuesto || '—';
+    return `<tr>
+      <td><strong>${ing.nombre}</strong></td>
+      <td>${ing.categoria || '<span style="color:var(--muted)">—</span>'}</td>
+      <td>${ing.unidad || '—'}</td>
+      <td style="font-size:0.8rem">${impLabel}</td>
+      <td><strong>$${fmt(ing.costo)}</strong></td>
+      <td>${fmtDec(ing.stockMinimo)} ${ing.unidad || ''}</td>
+      <td style="text-align:right">
+        <button class="btn btn-outline btn-sm btn-icon" onclick="openIngEdit('${ing.id}')" title="Editar"><i class="bi bi-pencil"></i></button>
+        <button class="btn btn-outline btn-sm btn-icon" onclick="deleteIngrediente('${ing.id}','${ing.nombre.replace(/'/g,"\\'")}'')" title="Eliminar" style="margin-left:4px"><i class="bi bi-trash"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function populateIngFilters() {
+  const catSel = document.getElementById('ing-filter-cat');
+  const provSel = document.getElementById('ing-filter-prov');
+  if (!catSel || !provSel) return;
+
+  const currentCat = catSel.value;
+  const currentProv = provSel.value;
+
+  catSel.innerHTML = '<option value="">Todas las categorías</option>' +
+    state.categorias.map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
+  catSel.value = currentCat;
+
+  provSel.innerHTML = '<option value="">Todos los proveedores</option>' +
+    state.proveedores.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+  provSel.value = currentProv;
+}
+
+function filterIngredientes() {
+  const q = document.getElementById('ing-search').value.toLowerCase();
+  const cat = document.getElementById('ing-filter-cat')?.value || '';
+  const provId = document.getElementById('ing-filter-prov')?.value || '';
+
+  const filtered = state.ingredientes.filter(i => {
+    const matchQ = !q || i.nombre.toLowerCase().includes(q) || (i.categoria || '').toLowerCase().includes(q);
+    const matchCat = !cat || i.categoria === cat;
+    const matchProv = !provId || (i.proveedorIds || []).includes(provId);
+    return matchQ && matchCat && matchProv;
+  });
+
+  renderIngredientes(filtered);
+  const countEl = document.getElementById('ing-count');
+  if (countEl) countEl.textContent = `${filtered.length} ingrediente${filtered.length !== 1 ? 's' : ''}`;
+}
+
+function showIngList() {
+  document.getElementById('ing-list-view').style.display = '';
+  document.getElementById('ing-edit-view').style.display = 'none';
+}
+
+async function openIngEdit(id) {
+  // Aseguramos proveedores, unidades y áreas cargadas
+  if (!state.proveedores.length) state.proveedores = await api('GET', '/proveedores');
+  if (!state.unidades.length) state.unidades = await api('GET', '/unidades');
+  if (!state.areas) state.areas = [];
+  if (!state.areas.length) state.areas = await api('GET', '/areas');
+  syncUnidadSelect();
+
+  const ing = id ? state.ingredientes.find(i => i.id === id) : null;
+  document.getElementById('ing-edit-title').textContent = ing ? 'Editar Ingrediente' : 'Nuevo Ingrediente';
+  document.getElementById('ing-id').value = ing?.id || '';
+  document.getElementById('ing-nombre').value = ing?.nombre || '';
+  document.getElementById('ing-categoria').value = ing?.categoria || '';
+  document.getElementById('ing-unidad').value = ing?.unidad || '';
+  document.getElementById('ing-impuesto').value = ing?.tipoImpuesto || 'alimento';
+  document.getElementById('ing-capacidad').value = ing?.capacidadCC || '';
+  document.getElementById('ing-stock-min').value = ing?.stockMinimo || '';
+
+  // Proveedores checkboxes
+  const checksContainer = document.getElementById('ing-prov-checks');
+  if (!state.proveedores.length) {
+    checksContainer.innerHTML = '<div style="padding:12px 14px;color:var(--muted);font-size:0.85rem">No hay proveedores creados.</div>';
+  } else {
+    checksContainer.innerHTML = state.proveedores.map(p => `
+      <label class="checkbox-item">
+        <input type="checkbox" value="${p.id}" ${(ing?.proveedorIds || []).includes(p.id) ? 'checked' : ''} />
+        <span>${p.nombre}</span>
+      </label>
+    `).join('');
+  }
+
+  // Áreas checkboxes
+  const areasContainer = document.getElementById('ing-area-checks');
+  if (!state.areas.length) {
+    areasContainer.innerHTML = '<div style="padding:12px 14px;color:var(--muted);font-size:0.85rem">No hay áreas creadas.</div>';
+  } else {
+    areasContainer.innerHTML = state.areas.map(a => `
+      <label class="checkbox-item">
+        <input type="checkbox" value="${a.id}" ${(ing?.areas || []).includes(a.id) ? 'checked' : ''} />
+        <span>${a.nombre}</span>
+      </label>
+    `).join('');
+  }
+
+  // enInventario toggle
+  document.getElementById('ing-en-inventario').checked = ing?.enInventario !== false;
+
+  // Historial de precios (solo si editando)
+  const preciosSection = document.getElementById('ing-precios-section');
+  if (ing) {
+    preciosSection.style.display = '';
+    resetPHForm();
+    loadHistorialPrecios(ing.id);
+  } else {
+    preciosSection.style.display = 'none';
+  }
+
+  document.getElementById('ing-list-view').style.display = 'none';
+  document.getElementById('ing-edit-view').style.display = '';
+  window.scrollTo(0, 0);
+}
+
+async function saveIngrediente() {
+  const nombre = document.getElementById('ing-nombre').value.trim();
+  if (!nombre) { toast('El nombre es requerido', 'error'); return; }
+  const id = document.getElementById('ing-id').value;
+
+  const proveedorIds = [...document.querySelectorAll('#ing-prov-checks input[type=checkbox]:checked')]
+    .map(cb => cb.value);
+  const areas = [...document.querySelectorAll('#ing-area-checks input[type=checkbox]:checked')]
+    .map(cb => cb.value);
+
+  const body = {
+    nombre,
+    categoria: document.getElementById('ing-categoria').value,
+    unidad: document.getElementById('ing-unidad').value,
+    tipoImpuesto: document.getElementById('ing-impuesto').value,
+    capacidadCC: parseFloat(document.getElementById('ing-capacidad').value) || 0,
+    stockMinimo: parseFloat(document.getElementById('ing-stock-min').value) || 0,
+    proveedorIds,
+    areas,
+    enInventario: document.getElementById('ing-en-inventario').checked
+  };
+
+  try {
+    if (id) {
+      await api('PUT', '/ingredientes/' + id, body);
+      toast('Ingrediente actualizado');
+    } else {
+      const res = await api('POST', '/ingredientes', body);
+      toast('Ingrediente creado');
+      // Abrir en modo edición para poder agregar precios
+      await loadIngredientes();
+      await openIngEdit(res.id);
+      return;
+    }
+    await loadIngredientes();
+    // Quedarse en edición para poder editar precios
+    const updatedIng = state.ingredientes.find(i => i.id === id);
+    if (updatedIng) {
+      document.getElementById('ing-nombre').value = updatedIng.nombre;
+    }
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteIngrediente(id, nombre) {
+  if (!confirm(`¿Eliminar "${nombre}"?`)) return;
+  try {
+    await api('DELETE', '/ingredientes/' + id);
+    toast('Ingrediente eliminado');
+    showIngList();
+    await loadIngredientes();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function populateIngSelects() {
+  document.querySelectorAll('.mrg-ing-select, .drw-ing-select').forEach(sel => {
+    const val = sel.value;
+    sel.innerHTML = '<option value="">— Seleccionar —</option>' +
+      state.ingredientes.map(i => `<option value="${i.id}" data-unidad="${i.unidad}" data-costo="${i.costo}">${i.nombre} (${i.unidad})</option>`).join('');
+    sel.value = val;
+  });
+}
+
+// ── Historial de precios ──────────────────────────────────────────────────────
+let phHistorial = [];
+
+async function loadHistorialPrecios(ingId) {
+  try {
+    phHistorial = await api('GET', `/ingredientes/${ingId}/precios`);
+    renderHistorial(ingId);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function renderHistorial(ingId) {
+  const container = document.getElementById('ph-lista');
+  if (!phHistorial.length) {
+    container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:0.87rem">Sin historial de precios. Agregá el primero.</div>';
+    return;
+  }
+  container.innerHTML = phHistorial.map(p => {
+    const ing = state.ingredientes.find(i => i.id === ingId);
+    const unidadLabel = p.unidadesEnvase && p.unidadesEnvase !== 1 ? `×${p.unidadesEnvase} u/envase` : '';
+    return `
+    <div class="ph-entry">
+      <div class="ph-entry-mes">${p.mes || '—'}</div>
+      <div class="ph-entry-main">
+        <div class="ph-entry-costo">
+          Costo unitario: $${fmt(p.costoUnitario)}
+          ${unidadLabel ? `<span class="ph-entry-badge" style="margin-left:8px">${unidadLabel}</span>` : ''}
+        </div>
+        <div class="ph-entry-meta">
+          <span>Neto: $${fmt(p.precioNeto)}</span>
+          <span>Cant: ${p.cantidadCompra}</span>
+          ${p.descuento ? `<span>Desc: ${p.descuento}%</span>` : ''}
+          ${p.fleteNeto ? `<span>Flete: $${fmt(p.fleteNeto)}</span>` : ''}
+          ${p.descripcionCompra ? `<span>${p.descripcionCompra}</span>` : ''}
+          <span>${TIPOS_IMPUESTO[ing?.tipoImpuesto] || ''}</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-outline btn-sm" onclick="editPrecio('${p.id}')">Editar</button>
+        <button class="btn btn-outline btn-sm btn-icon" onclick="deletePrecio('${p.id}','${ingId}')" style="color:var(--danger)"><i class="bi bi-x"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function recalcPH() {
+  const pn = parseFloat(document.getElementById('ph-precio-neto').value) || 0;
+  const desc = parseFloat(document.getElementById('ph-descuento').value) || 0;
+  const flete = parseFloat(document.getElementById('ph-flete').value) || 0;
+  const cant = parseFloat(document.getElementById('ph-cantidad').value) || 1;
+  const conDesc = pn * (1 - desc / 100);
+  const costoUnitario = (conDesc + flete) / cant;
+  const preview = document.getElementById('ph-preview');
+  if (pn > 0) {
+    preview.className = 'ph-preview';
+    preview.innerHTML = `<strong>Costo unitario calculado: $${fmt(costoUnitario)}</strong>
+      <span style="color:var(--muted);margin-left:8px">(${cant} unidades × $${fmt(costoUnitario)} = $${fmt(cant * costoUnitario)})</span>`;
+  } else {
+    preview.innerHTML = '';
+  }
+}
+
+function resetPHForm() {
+  const now = new Date();
+  document.getElementById('ph-mes').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  document.getElementById('ph-precio-neto').value = '';
+  document.getElementById('ph-descuento').value = '0';
+  document.getElementById('ph-cantidad').value = '1';
+  document.getElementById('ph-descripcion').value = '';
+  document.getElementById('ph-flete').value = '0';
+  document.getElementById('ph-editing-id').value = '';
+  document.getElementById('ph-preview').innerHTML = '';
+  document.getElementById('ph-cancel-edit-btn').style.display = 'none';
+}
+
+function editPrecio(id) {
+  const p = phHistorial.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('ph-editing-id').value = id;
+  document.getElementById('ph-mes').value = p.mes || '';
+  document.getElementById('ph-precio-neto').value = p.precioNeto || '';
+  document.getElementById('ph-descuento').value = p.descuento || 0;
+  document.getElementById('ph-cantidad').value = p.cantidadCompra || 1;
+  document.getElementById('ph-descripcion').value = p.descripcionCompra || '';
+  document.getElementById('ph-flete').value = p.fleteNeto || 0;
+  document.getElementById('ph-cancel-edit-btn').style.display = '';
+  recalcPH();
+  document.getElementById('ph-precio-neto').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function cancelEditPrecio() {
+  resetPHForm();
+}
+
+async function agregarPrecio() {
+  const ingId = document.getElementById('ing-id').value;
+  if (!ingId) { toast('Guardá el ingrediente primero', 'error'); return; }
+  const pn = parseFloat(document.getElementById('ph-precio-neto').value) || 0;
+  if (!pn) { toast('El precio neto es requerido', 'error'); return; }
+
+  const body = {
+    mes: document.getElementById('ph-mes').value,
+    precioNeto: pn,
+    descuento: document.getElementById('ph-descuento').value,
+    cantidadCompra: document.getElementById('ph-cantidad').value,
+    descripcionCompra: document.getElementById('ph-descripcion').value,
+    fleteNeto: document.getElementById('ph-flete').value
+  };
+
+  const editingId = document.getElementById('ph-editing-id').value;
+  try {
+    if (editingId) {
+      await api('PUT', `/ingredientes/${ingId}/precios/${editingId}`, body);
+      toast('Precio actualizado');
+    } else {
+      await api('POST', `/ingredientes/${ingId}/precios`, body);
+      toast('Precio agregado. Costo actualizado.');
+    }
+    resetPHForm();
+    await loadIngredientes(); // actualiza el costo en la lista
+    await loadHistorialPrecios(ingId);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deletePrecio(precioId, ingId) {
+  if (!confirm('¿Eliminar este registro de precio?')) return;
+  try {
+    await api('DELETE', `/ingredientes/${ingId}/precios/${precioId}`);
+    toast('Precio eliminado');
+    await loadHistorialPrecios(ingId);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════ PROVEEDORES ═══════
+async function loadProveedores() {
+  try {
+    state.proveedores = await api('GET', '/proveedores');
+    renderProveedores();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function renderProveedores(list) {
+  const rows = list || state.proveedores;
+  const tbody = document.getElementById('prov-table-body');
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><i class="bi bi-truck"></i><p>No hay proveedores registrados.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map(p => `<tr>
+    <td><strong>${p.nombre}</strong></td>
+    <td>${p.telefono || '—'}</td>
+    <td>${p.email || '—'}</td>
+    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.notas || '—'}</td>
+    <td style="text-align:right">
+      <button class="btn btn-outline btn-sm btn-icon" onclick="editProveedor('${p.id}')" title="Editar"><i class="bi bi-pencil"></i></button>
+      <button class="btn btn-outline btn-sm btn-icon" onclick="deleteProveedor('${p.id}','${p.nombre}')" title="Eliminar" style="margin-left:4px"><i class="bi bi-trash"></i></button>
+    </td>
+  </tr>`).join('');
+}
+
+function filterProveedores() {
+  const q = document.getElementById('prov-search').value.toLowerCase();
+  renderProveedores(state.proveedores.filter(p =>
+    p.nombre.toLowerCase().includes(q) || (p.email || '').toLowerCase().includes(q)
+  ));
+}
+
+function openProvModal(prov) {
+  document.getElementById('modal-prov-title').textContent = prov ? 'Editar Proveedor' : 'Nuevo Proveedor';
+  document.getElementById('prov-id').value = prov?.id || '';
+  document.getElementById('prov-nombre').value = prov?.nombre || '';
+  document.getElementById('prov-telefono').value = prov?.telefono || '';
+  document.getElementById('prov-email').value = prov?.email || '';
+  document.getElementById('prov-notas').value = prov?.notas || '';
+  openModal('modal-prov');
+  setTimeout(() => document.getElementById('prov-nombre').focus(), 100);
+}
+
+function editProveedor(id) {
+  const prov = state.proveedores.find(p => p.id === id);
+  if (prov) openProvModal(prov);
+}
+
+async function saveProveedor() {
+  const nombre = document.getElementById('prov-nombre').value.trim();
+  if (!nombre) { toast('El nombre es requerido', 'error'); return; }
+  const id = document.getElementById('prov-id').value;
+  const body = {
+    nombre,
+    telefono: document.getElementById('prov-telefono').value.trim(),
+    email: document.getElementById('prov-email').value.trim(),
+    notas: document.getElementById('prov-notas').value.trim()
+  };
+  try {
+    if (id) {
+      await api('PUT', '/proveedores/' + id, body);
+      toast('Proveedor actualizado');
+    } else {
+      await api('POST', '/proveedores', body);
+      toast('Proveedor creado');
+    }
+    closeModal('modal-prov');
+    await loadProveedores();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteProveedor(id, nombre) {
+  if (!confirm(`¿Eliminar "${nombre}"?`)) return;
+  try {
+    await api('DELETE', '/proveedores/' + id);
+    toast('Proveedor eliminado');
+    await loadProveedores();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════ ALERTAS ══════════
+async function loadAlertasBadge() {
+  try {
+    const data = await api('GET', '/alertas?resuelta=false');
+    const badge = document.getElementById('alertas-badge');
+    if (data.length > 0) {
+      badge.textContent = data.length;
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
+  } catch {}
+}
+
+async function loadAlertas() {
+  const resuelta = state.alertasFilter;
+  // Update filter buttons
+  document.getElementById('btn-alertas-activas').className = `btn ${resuelta ? 'btn-outline' : 'btn-primary'} btn-sm`;
+  document.getElementById('btn-alertas-resueltas').className = `btn ${resuelta ? 'btn-primary' : 'btn-outline'} btn-sm`;
+
+  try {
+    state.alertas = await api('GET', `/alertas?resuelta=${resuelta}`);
+    renderAlertas();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function setAlertaFilter(resuelta) {
+  state.alertasFilter = resuelta;
+  loadAlertas();
+}
+
+function renderAlertas() {
+  const container = document.getElementById('alertas-list');
+  if (!state.alertas.length) {
+    container.innerHTML = `<div class="empty-state"><i class="bi bi-bell"></i><p>${state.alertasFilter ? 'No hay alertas resueltas.' : 'No hay alertas activas.'}</p></div>`;
+    return;
+  }
+  container.innerHTML = state.alertas.map(a => `
+    <div class="alert-card${a.resuelta ? ' resolved' : ''}">
+      <div class="alert-icon ${a.resuelta ? 'success' : 'danger'}">
+        <i class="bi bi-${a.resuelta ? 'check-circle' : 'exclamation-triangle'}"></i>
+      </div>
+      <div class="alert-info">
+        <div class="alert-msg">${a.mensaje}</div>
+        <div class="alert-date">${fmtDate(a.creadoEn)}</div>
+      </div>
+      ${!a.resuelta ? `<button class="btn btn-success btn-sm" onclick="resolverAlerta('${a.id}')"><i class="bi bi-check"></i> Resolver</button>` : '<span class="badge badge-success">Resuelta</span>'}
+    </div>
+  `).join('');
+}
+
+async function resolverAlerta(id) {
+  try {
+    await api('PATCH', `/alertas/${id}/resolver`);
+    toast('Alerta resuelta');
+    await loadAlertas();
+    await loadAlertasBadge();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════ STOCK ════════════
+const stockChanges = {};
+
+async function loadStock() {
+  try {
+    if (!state.proveedores.length) state.proveedores = await api('GET', '/proveedores');
+    if (!state.areas.length) state.areas = await api('GET', '/areas');
+    state.stock = await api('GET', '/stock');
+    // Set today's date if empty
+    const fechaEl = document.getElementById('stock-fecha');
+    if (fechaEl && !fechaEl.value) fechaEl.value = new Date().toISOString().split('T')[0];
+    // Populate area filter
+    const areaSel = document.getElementById('stock-filter-area');
+    if (areaSel) {
+      areaSel.innerHTML = '<option value="">Todas las áreas</option>' +
+        state.areas.map(a => `<option value="${a.id}">${a.nombre}</option>`).join('');
+    }
+    renderStockList();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function renderStockList(filter, areaId) {
+  const container = document.getElementById('stock-list');
+  if (!container) return;
+  const provMap = {};
+  state.proveedores.forEach(p => { provMap[p.id] = p.nombre; });
+
+  // Solo ingredientes marcados enInventario
+  let items = state.stock.filter(i => i.enInventario !== false);
+  if (filter) items = items.filter(i =>
+    i.nombre.toLowerCase().includes(filter) || (i.categoria || '').toLowerCase().includes(filter)
+  );
+  if (areaId) items = items.filter(i => (i.areas || []).includes(areaId));
+
+  if (!items.length) {
+    container.innerHTML = '<div class="empty-state"><i class="bi bi-box-seam"></i><p>No hay ingredientes.</p></div>';
+    return;
+  }
+
+  // Group by category
+  const groups = {};
+  items.forEach(ing => {
+    const cat = ing.categoria || 'Sin categoría';
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(ing);
+  });
+
+  const sortedCats = Object.keys(groups).sort();
+  let html = '';
+  sortedCats.forEach(cat => {
+    html += `<div class="stock-cat-header">${cat}</div>`;
+    groups[cat].forEach(ing => {
+      const provNames = (ing.proveedorIds || []).map(id => provMap[id]).filter(Boolean);
+      const provPills = provNames.map(n => `<span class="stock-prov-pill">${n}</span>`).join('');
+      const actual = ing.cantidad != null ? fmtDec(ing.cantidad) : '—';
+      html += `
+        <div class="stock-row">
+          <div class="stock-row-info">
+            <div class="stock-row-name">${ing.nombre}</div>
+            ${provPills ? `<div class="stock-row-provs">${provPills}</div>` : ''}
+          </div>
+          <div class="stock-row-actual">${actual}</div>
+          <input type="number" class="stock-row-input" min="0" step="0.001"
+            placeholder="—" id="stock-inp-${ing.id}"
+            oninput="stockChanges['${ing.id}'] = this.value" />
+          <div class="stock-row-unit">${ing.unidad || ''}</div>
+        </div>`;
+    });
+  });
+  container.innerHTML = html;
+}
+
+function filterStockList() {
+  const q = document.getElementById('stock-search')?.value.toLowerCase() || '';
+  const areaId = document.getElementById('stock-filter-area')?.value || '';
+  renderStockList(q || null, areaId || null);
+}
+
+// Keep old name for compat
+function filterStock() { filterStockList(); }
+
+async function saveStock() {
+  const fecha = document.getElementById('stock-fecha')?.value || new Date().toISOString().split('T')[0];
+  const cambios = Object.entries(stockChanges)
+    .filter(([, v]) => v !== '' && v !== null && v !== undefined)
+    .map(([ingredienteId, cantidad]) => ({ ingredienteId, cantidad: parseFloat(cantidad), modo: 'set' }));
+
+  if (!cambios.length) { toast('No hay cambios para guardar', 'error'); return; }
+
+  try {
+    await api('POST', '/stock', { items: cambios });
+
+    // Crear registro en historial
+    const stockMap = {};
+    state.stock.forEach(s => { stockMap[s.id] = s; });
+    const itemsHistorial = cambios.map(c => {
+      const ing = stockMap[c.ingredienteId];
+      return {
+        ingredienteId: c.ingredienteId,
+        nombre: ing?.nombre || c.ingredienteId,
+        unidad: ing?.unidad || '',
+        categoria: ing?.categoria || '',
+        cantidad: c.cantidad
+      };
+    });
+
+    await api('POST', '/inventarios', {
+      fecha,
+      items: itemsHistorial,
+      notas: 'Añadir Stock'
+    });
+
+    toast(`Stock guardado en historial (${cambios.length} ingrediente${cambios.length !== 1 ? 's' : ''})`);
+    for (const key in stockChanges) delete stockChanges[key];
+    await Promise.all([loadStock(), loadInventarios(), loadAlertasBadge()]);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════ INVENTARIOS ══════
+async function loadInventarios() {
+  try {
+    state.inventarios = await api('GET', '/inventarios');
+    renderInventarios();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function renderInventarios() {
+  const acc = document.getElementById('inv-accordion');
+  if (!acc) return;
+  if (!state.inventarios.length) {
+    acc.innerHTML = '<div class="empty-state"><i class="bi bi-clipboard-data"></i><p>No hay inventarios registrados.</p></div>';
+    return;
+  }
+  acc.innerHTML = state.inventarios.map((inv, idx) => {
+    const bodyId = 'inv-body-' + inv.id;
+    const chevId = 'inv-chev-' + inv.id;
+    return `
+    <div class="inv-acc-card">
+      <div class="inv-acc-header" onclick="toggleInvAcc('${inv.id}')">
+        <div class="inv-acc-date">${inv.fecha}</div>
+        <div class="inv-acc-email">${inv.creadoPorEmail || ''}</div>
+        <div class="inv-acc-count">${inv.itemCount || (inv.items?.length ?? 0)} productos</div>
+        <button class="btn btn-outline btn-sm" style="margin-left:8px" onclick="event.stopPropagation();deleteInventario('${inv.id}')">Eliminar</button>
+        <i class="bi bi-chevron-down inv-acc-chevron" id="${chevId}"></i>
+      </div>
+      <div class="inv-acc-body" id="${bodyId}"></div>
+    </div>`;
+  }).join('');
+}
+
+function toggleInvAcc(id) {
+  const body = document.getElementById('inv-body-' + id);
+  const chev = document.getElementById('inv-chev-' + id);
+  const isOpen = body.classList.contains('open');
+  if (isOpen) {
+    body.classList.remove('open');
+    chev.classList.remove('open');
+  } else {
+    // Lazy-render detail
+    if (!body.dataset.loaded) {
+      const inv = state.inventarios.find(i => i.id === id);
+      if (inv) body.innerHTML = renderInvDetail(inv);
+      body.dataset.loaded = '1';
+    }
+    body.classList.add('open');
+    chev.classList.add('open');
+  }
+}
+
+function renderInvDetail(inv) {
+  const items = inv.items || [];
+  if (!items.length) return '<p style="padding:16px 0;color:var(--muted)">Sin items.</p>';
+
+  // Group by category
+  const groups = {};
+  items.forEach(item => {
+    const cat = item.categoria || 'Sin categoría';
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(item);
+  });
+
+  let html = '';
+  if (inv.notas) html += `<p style="padding:12px 0 0;font-size:0.83rem;color:var(--muted)">Notas: <strong>${inv.notas}</strong></p>`;
+  const cats = Object.keys(groups).sort();
+  cats.forEach(cat => {
+    html += `<div class="inv-det-cat">${cat}</div>`;
+    groups[cat].forEach(item => {
+      html += `<div class="inv-det-row">
+        <span>${item.nombre}</span>
+        <span><span class="inv-det-qty">${fmtDec(item.cantidad)}</span> ${item.unidad || ''}</span>
+      </div>`;
+    });
+  });
+  return html;
+}
+
+function switchInvTab(tab) {
+  document.getElementById('inv-tab-historial').style.display = tab === 'historial' ? '' : 'none';
+  document.getElementById('inv-tab-stock').style.display = tab === 'stock' ? '' : 'none';
+  document.getElementById('tab-inv-historial').classList.toggle('active', tab === 'historial');
+  document.getElementById('tab-inv-stock').classList.toggle('active', tab === 'stock');
+}
+
+// Stubs for legacy calls that may still exist
+function showInvList() {}
+async function openNewInventario() {}
+function renderInvItems() {}
+function filterInvItems() {}
+async function saveInventario() {}
+async function verInventario() {}
+
+async function deleteInventario(id) {
+  if (!confirm('¿Eliminar este inventario? (No revierte el stock)')) return;
+  try {
+    await api('DELETE', '/inventarios/' + id);
+    toast('Inventario eliminado');
+    await loadInventarios();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════ MÁRGENES ═════════
+let mrgCols = 3;
+let prepCols = 3;
+let mrgActiveTab = 'recetas';
+
+function switchMrgTab(tab) {
+  mrgActiveTab = tab;
+  document.getElementById('tab-recetas').classList.toggle('active', tab === 'recetas');
+  document.getElementById('tab-preparaciones').classList.toggle('active', tab === 'preparaciones');
+  document.getElementById('mrg-tab-recetas').style.display = tab === 'recetas' ? '' : 'none';
+  document.getElementById('mrg-tab-preparaciones').style.display = tab === 'preparaciones' ? '' : 'none';
+}
+
+function setMrgCols(n) {
+  mrgCols = n;
+  [3,4,6].forEach(c => document.getElementById('col-btn-'+c)?.classList.toggle('active', c === n));
+  document.getElementById('recetas-grid').className = `recipes-grid cols-${n}`;
+}
+
+function setPrepCols(n) {
+  prepCols = n;
+  [3,4,6].forEach(c => document.getElementById('prep-col-btn-'+c)?.classList.toggle('active', c === n));
+  document.getElementById('preps-grid').className = `recipes-grid cols-${n}`;
+}
+
+function mrgPillClass(m) { return m >= 70 ? 'high' : m >= 50 ? 'mid' : 'low'; }
+
+async function loadMargenes() {
+  try {
+    const [ings, preps, recetas] = await Promise.all([
+      state.ingredientes.length ? Promise.resolve(state.ingredientes) : api('GET', '/ingredientes'),
+      api('GET', '/preparaciones'),
+      api('GET', '/margenes')
+    ]);
+    state.ingredientes = ings;
+    state.preparaciones = preps;
+    state.margenes = recetas;
+    renderRecetasGrid();
+    renderPrepsGrid();
+    renderMrgStats();
+    // Populate category filter
+    const cats = [...new Set(recetas.map(m => m.categoria).filter(Boolean))];
+    const sel = document.getElementById('mrg-filter-cat');
+    sel.innerHTML = '<option value="">Todas las categorías</option>' +
+      cats.map(c => `<option value="${c}">${c}</option>`).join('');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function renderRecetasGrid(list) {
+  const grid = document.getElementById('recetas-grid');
+  const rows = list || state.margenes;
+  if (!rows.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1"><div class="empty-state"><i class="bi bi-graph-up-arrow"></i><p>No hay recetas. Creá la primera.</p></div></div>`;
+    return;
+  }
+  grid.innerHTML = rows.map(m => {
+    const mPct = parseFloat(m.margen) || 0;
+    return `
+    <div class="recipe-card">
+      <div class="recipe-card-top">
+        <div class="recipe-card-name">${m.nombre}</div>
+        <div class="recipe-card-actions">
+          <span class="mrg-pill ${mrgPillClass(mPct)}">${fmtPct(mPct)}</span>
+          <button class="btn btn-outline btn-sm btn-icon" onclick="editReceta('${m.id}')" title="Editar"><i class="bi bi-pencil"></i></button>
+          <button class="btn btn-outline btn-sm btn-icon" onclick="deleteReceta('${m.id}','${m.nombre.replace(/'/g,"\\'")}')"><i class="bi bi-x" style="color:var(--danger)"></i></button>
+        </div>
+      </div>
+      <div class="recipe-card-tags">
+        ${m.categoria ? `<span class="recipe-card-tag cat">${m.categoria}</span>` : ''}
+        ${m.metodo ? `<span class="recipe-card-tag metodo">${m.metodo}</span>` : ''}
+      </div>
+      <div class="recipe-card-stats">
+        <div><div class="recipe-stat-label">COSTO</div><div class="recipe-stat-val">$${fmt(m.costoPorcion)}</div></div>
+        <div><div class="recipe-stat-label">VENTA</div><div class="recipe-stat-val">$${fmt(m.precioVenta)}</div></div>
+        <div><div class="recipe-stat-label">ING.</div><div class="recipe-stat-val">${(m.ingredientes||[]).length}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderPrepsGrid(list) {
+  const grid = document.getElementById('preps-grid');
+  const rows = list || state.preparaciones || [];
+  if (!rows.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1"><div class="empty-state"><i class="bi bi-gear"></i><p>No hay preparaciones. Creá la primera.</p></div></div>`;
+    return;
+  }
+  grid.innerHTML = rows.map(p => `
+    <div class="recipe-card">
+      <div class="recipe-card-top">
+        <div class="recipe-card-name">${p.nombre}</div>
+        <div class="recipe-card-actions">
+          <button class="btn btn-outline btn-sm btn-icon" onclick="editPrep('${p.id}')" title="Editar"><i class="bi bi-pencil"></i></button>
+          <button class="btn btn-outline btn-sm btn-icon" onclick="deletePrep('${p.id}','${p.nombre.replace(/'/g,"\\'")}')"><i class="bi bi-x" style="color:var(--danger)"></i></button>
+        </div>
+      </div>
+      <div class="recipe-card-tags">
+        ${p.categoria ? `<span class="recipe-card-tag cat">${p.categoria}</span>` : ''}
+      </div>
+      <div class="recipe-card-stats">
+        <div><div class="recipe-stat-label">COSTO/U</div><div class="recipe-stat-val">$${fmt(p.costoPorUnidad)}</div></div>
+        <div><div class="recipe-stat-label">RINDE</div><div class="recipe-stat-val">${p.rendimiento} ${p.unidad}</div></div>
+        <div><div class="recipe-stat-label">ING.</div><div class="recipe-stat-val">${(p.ingredientes||[]).length}</div></div>
+      </div>
+    </div>`).join('');
+}
+
+function renderMrgStats() {
+  const total = state.margenes.length;
+  const avg = total ? state.margenes.reduce((s, m) => s + (m.margen || 0), 0) / total : 0;
+  document.getElementById('stat-recetas').textContent = total;
+  document.getElementById('stat-mrg-prom').textContent = fmtPct(avg);
+  document.getElementById('stat-bajo50').textContent = state.margenes.filter(m => (m.margen||0) < 50).length;
+  document.getElementById('stat-sobre70').textContent = state.margenes.filter(m => (m.margen||0) >= 70).length;
+}
+
+function filterRecetas() {
+  const q = document.getElementById('mrg-search').value.toLowerCase();
+  const cat = document.getElementById('mrg-filter-cat').value;
+  const mrg = document.getElementById('mrg-filter-mrg').value;
+  let list = state.margenes.filter(m =>
+    (!q || m.nombre.toLowerCase().includes(q) || (m.categoria||'').toLowerCase().includes(q)) &&
+    (!cat || m.categoria === cat) &&
+    (!mrg || (mrg === 'high' && m.margen >= 70) || (mrg === 'mid' && m.margen >= 50 && m.margen < 70) || (mrg === 'low' && m.margen < 50))
+  );
+  renderRecetasGrid(list);
+}
+
+function filterPreps() {
+  const q = document.getElementById('prep-search').value.toLowerCase();
+  renderPrepsGrid((state.preparaciones||[]).filter(p => p.nombre.toLowerCase().includes(q)));
+}
+
+// ── Drawer Receta ─────────────────────────────────────────────────────────────
+function openRecetaDrawer(receta) {
+  document.getElementById('drw-receta-title').textContent = receta ? 'Editar receta' : 'Nueva receta';
+  document.getElementById('drw-r-id').value = receta?.id || '';
+  document.getElementById('drw-r-nombre').value = receta?.nombre || '';
+  document.getElementById('drw-r-cat').value = receta?.categoria || '';
+  document.getElementById('drw-r-metodo').value = receta?.metodo || '';
+  document.getElementById('drw-r-precio').value = receta?.precioVenta || '';
+  document.getElementById('drw-r-porciones').value = receta?.porciones || 1;
+  document.getElementById('drw-r-notas').value = receta?.notas || '';
+  // Populate category datalist
+  const cats = [...new Set(state.margenes.map(m => m.categoria).filter(Boolean))];
+  document.getElementById('drw-r-cat-list').innerHTML = cats.map(c => `<option value="${c}">`).join('');
+  // Build rows
+  const list = document.getElementById('drw-r-ing-list');
+  list.innerHTML = '';
+  if (receta?.ingredientes?.length) {
+    receta.ingredientes.forEach(i => addDrwIngRow(i.tipo || 'ingrediente', i));
+  }
+  recalcDrwCost();
+  document.getElementById('drw-receta-overlay').classList.add('open');
+  document.getElementById('drw-receta').classList.add('open');
+}
+
+function closeRecetaDrawer() {
+  document.getElementById('drw-receta-overlay').classList.remove('open');
+  document.getElementById('drw-receta').classList.remove('open');
+}
+
+function editReceta(id) { openRecetaDrawer(state.margenes.find(m => m.id === id)); }
+
+function addDrwIngRow(tipo, data) {
+  const list = document.getElementById('drw-r-ing-list');
+  const row = document.createElement('div');
+  row.className = 'drw-ing-row';
+
+  let options, costoUnitario, unidad;
+  if (tipo === 'preparacion') {
+    options = (state.preparaciones||[]).map(p =>
+      `<option value="${p.id}" data-costo="${p.costoPorUnidad}" data-unidad="${p.unidad}"${data?.refId === p.id ? ' selected':''}>
+        ${p.nombre} (${p.unidad})
+      </option>`).join('');
+    costoUnitario = data?.costoUnitario || 0;
+    unidad = data?.unidad || '';
+  } else {
+    options = state.ingredientes.map(i =>
+      `<option value="${i.id}" data-costo="${i.costo}" data-unidad="${i.unidad}"${data?.ingredienteId === i.id ? ' selected':''}>
+        ${i.nombre} (${i.unidad})
+      </option>`).join('');
+    costoUnitario = data?.costoUnitario || 0;
+    unidad = data?.unidad || '';
+  }
+
+  row.innerHTML = `
+    <div class="drw-ing-main">
+      <span class="drw-ing-badge tipo-${tipo}">${tipo === 'preparacion' ? 'Preparación' : 'Ingrediente'}</span>
+      <select class="form-control drw-ing-select">
+        <option value="">— Seleccionar —</option>
+        ${options}
+      </select>
+      <input type="number" class="form-control drw-ing-cant" min="0" step="0.001" placeholder="Cant." value="${data?.cantidad || ''}" />
+      <span class="drw-ing-unit">${unidad}</span>
+      <button class="btn btn-outline btn-sm btn-icon" onclick="this.closest('.drw-ing-row').remove();recalcDrwCost()">
+        <i class="bi bi-x" style="color:var(--danger)"></i>
+      </button>
+    </div>
+    <div class="drw-ing-cost"></div>
+  `;
+
+  const sel = row.querySelector('.drw-ing-select');
+  const cantInp = row.querySelector('.drw-ing-cant');
+  const unitSpan = row.querySelector('.drw-ing-unit');
+  const costDiv = row.querySelector('.drw-ing-cost');
+
+  const update = () => {
+    const opt = sel.selectedOptions[0];
+    const costo = parseFloat(opt?.dataset?.costo) || 0;
+    const cant = parseFloat(cantInp.value) || 0;
+    unitSpan.textContent = opt?.dataset?.unidad || '';
+    const subtotal = costo * cant;
+    costDiv.textContent = cant > 0 && costo > 0
+      ? `$${fmtDec(costo)} × ${cant} = $${fmt(subtotal)}`
+      : '';
+    recalcDrwCost();
+  };
+
+  sel.addEventListener('change', update);
+  cantInp.addEventListener('input', update);
+  list.appendChild(row);
+  recalcDrwCost();
+}
+
+function recalcDrwCost() {
+  let total = 0;
+  document.querySelectorAll('#drw-r-ing-list .drw-ing-row').forEach(row => {
+    const sel = row.querySelector('.drw-ing-select');
+    const cant = parseFloat(row.querySelector('.drw-ing-cant')?.value) || 0;
+    const costo = parseFloat(sel.selectedOptions[0]?.dataset?.costo) || 0;
+    total += costo * cant;
+  });
+  const porciones = parseFloat(document.getElementById('drw-r-porciones')?.value) || 1;
+  const precio = parseFloat(document.getElementById('drw-r-precio')?.value) || 0;
+  const porcion = total / porciones;
+  const margen = precio > 0 ? ((precio - porcion) / precio) * 100 : 0;
+  document.getElementById('drw-r-costo-total').textContent = '$' + fmt(total);
+  document.getElementById('drw-r-costo-porcion').textContent = '$' + fmt(porcion);
+  const mEl = document.getElementById('drw-r-margen');
+  mEl.textContent = fmtPct(margen);
+  mEl.style.color = marginColor(margen);
+}
+
+async function saveReceta() {
+  const nombre = document.getElementById('drw-r-nombre').value.trim();
+  if (!nombre) { toast('El nombre es requerido', 'error'); return; }
+
+  const ingredientes = [];
+  document.querySelectorAll('#drw-r-ing-list .drw-ing-row').forEach(row => {
+    const badge = row.querySelector('.drw-ing-badge');
+    const tipo = badge?.classList.contains('tipo-preparacion') ? 'preparacion' : 'ingrediente';
+    const sel = row.querySelector('.drw-ing-select');
+    const cant = parseFloat(row.querySelector('.drw-ing-cant')?.value) || 0;
+    if (!sel.value || cant <= 0) return;
+    const opt = sel.selectedOptions[0];
+    const costo = parseFloat(opt?.dataset?.costo) || 0;
+    const entry = {
+      tipo,
+      cantidad: cant,
+      unidad: opt?.dataset?.unidad || '',
+      costoUnitario: costo,
+      nombre: opt?.text?.split('(')[0].trim() || ''
+    };
+    if (tipo === 'preparacion') entry.refId = sel.value;
+    else entry.ingredienteId = sel.value;
+    ingredientes.push(entry);
+  });
+
+  const id = document.getElementById('drw-r-id').value;
+  const body = {
+    nombre,
+    categoria: document.getElementById('drw-r-cat').value.trim(),
+    metodo: document.getElementById('drw-r-metodo').value.trim(),
+    precioVenta: document.getElementById('drw-r-precio').value,
+    porciones: document.getElementById('drw-r-porciones').value,
+    ingredientes,
+    notas: document.getElementById('drw-r-notas').value.trim()
+  };
+
+  try {
+    if (id) { await api('PUT', '/margenes/' + id, body); toast('Receta actualizada'); }
+    else { await api('POST', '/margenes', body); toast('Receta creada'); }
+    closeRecetaDrawer();
+    await loadMargenes();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteReceta(id, nombre) {
+  if (!confirm(`¿Eliminar "${nombre}"?`)) return;
+  try {
+    await api('DELETE', '/margenes/' + id);
+    toast('Receta eliminada');
+    await loadMargenes();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Drawer Preparación ────────────────────────────────────────────────────────
+function openPrepDrawer(prep) {
+  document.getElementById('drw-prep-title').textContent = prep ? 'Editar preparación' : 'Nueva preparación';
+  document.getElementById('drw-p-id').value = prep?.id || '';
+  document.getElementById('drw-p-nombre').value = prep?.nombre || '';
+  document.getElementById('drw-p-cat').value = prep?.categoria || '';
+  document.getElementById('drw-p-unidad').value = prep?.unidad || 'porción';
+  document.getElementById('drw-p-rendimiento').value = prep?.rendimiento || 1;
+  document.getElementById('drw-p-notas').value = prep?.notas || '';
+  const list = document.getElementById('drw-p-ing-list');
+  list.innerHTML = '';
+  if (prep?.ingredientes?.length) {
+    prep.ingredientes.forEach(i => addDrwPrepIngRow(i));
+  }
+  recalcPrepCost();
+  document.getElementById('drw-prep-overlay').classList.add('open');
+  document.getElementById('drw-prep').classList.add('open');
+}
+
+function closePrepDrawer() {
+  document.getElementById('drw-prep-overlay').classList.remove('open');
+  document.getElementById('drw-prep').classList.remove('open');
+}
+
+function editPrep(id) { openPrepDrawer((state.preparaciones||[]).find(p => p.id === id)); }
+
+function addDrwPrepIngRow(data) {
+  const list = document.getElementById('drw-p-ing-list');
+  const row = document.createElement('div');
+  row.className = 'drw-ing-row';
+  const options = state.ingredientes.map(i =>
+    `<option value="${i.id}" data-costo="${i.costo}" data-unidad="${i.unidad}"${data?.ingredienteId === i.id ? ' selected':''}>
+      ${i.nombre} (${i.unidad})
+    </option>`).join('');
+
+  row.innerHTML = `
+    <div class="drw-ing-main">
+      <span class="drw-ing-badge tipo-ingrediente">Ingrediente</span>
+      <select class="form-control drw-ing-select">
+        <option value="">— Seleccionar —</option>${options}
+      </select>
+      <input type="number" class="form-control drw-ing-cant" min="0" step="0.001" placeholder="Cant." value="${data?.cantidad || ''}" />
+      <span class="drw-ing-unit">${data?.unidad || ''}</span>
+      <button class="btn btn-outline btn-sm btn-icon" onclick="this.closest('.drw-ing-row').remove();recalcPrepCost()">
+        <i class="bi bi-x" style="color:var(--danger)"></i>
+      </button>
+    </div>
+    <div class="drw-ing-cost"></div>
+  `;
+
+  const sel = row.querySelector('.drw-ing-select');
+  const cantInp = row.querySelector('.drw-ing-cant');
+  const unitSpan = row.querySelector('.drw-ing-unit');
+  const costDiv = row.querySelector('.drw-ing-cost');
+
+  const update = () => {
+    const opt = sel.selectedOptions[0];
+    const costo = parseFloat(opt?.dataset?.costo) || 0;
+    const cant = parseFloat(cantInp.value) || 0;
+    unitSpan.textContent = opt?.dataset?.unidad || '';
+    costDiv.textContent = cant > 0 && costo > 0
+      ? `$${fmtDec(costo)} × ${cant} = $${fmt(costo * cant)}`
+      : '';
+    recalcPrepCost();
+  };
+  sel.addEventListener('change', update);
+  cantInp.addEventListener('input', update);
+  list.appendChild(row);
+  recalcPrepCost();
+}
+
+function recalcPrepCost() {
+  let total = 0;
+  document.querySelectorAll('#drw-p-ing-list .drw-ing-row').forEach(row => {
+    const costo = parseFloat(row.querySelector('.drw-ing-select')?.selectedOptions[0]?.dataset?.costo) || 0;
+    const cant = parseFloat(row.querySelector('.drw-ing-cant')?.value) || 0;
+    total += costo * cant;
+  });
+  const rend = parseFloat(document.getElementById('drw-p-rendimiento')?.value) || 1;
+  document.getElementById('drw-p-costo-total').textContent = '$' + fmt(total);
+  document.getElementById('drw-p-costo-unidad').textContent = '$' + fmt(total / rend);
+}
+
+async function savePreparacion() {
+  const nombre = document.getElementById('drw-p-nombre').value.trim();
+  if (!nombre) { toast('El nombre es requerido', 'error'); return; }
+
+  const ingredientes = [];
+  document.querySelectorAll('#drw-p-ing-list .drw-ing-row').forEach(row => {
+    const sel = row.querySelector('.drw-ing-select');
+    const cant = parseFloat(row.querySelector('.drw-ing-cant')?.value) || 0;
+    if (!sel.value || cant <= 0) return;
+    const opt = sel.selectedOptions[0];
+    ingredientes.push({
+      ingredienteId: sel.value,
+      nombre: opt?.text?.split('(')[0].trim() || '',
+      cantidad: cant,
+      unidad: opt?.dataset?.unidad || '',
+      costoUnitario: parseFloat(opt?.dataset?.costo) || 0
+    });
+  });
+
+  const id = document.getElementById('drw-p-id').value;
+  const body = {
+    nombre,
+    categoria: document.getElementById('drw-p-cat').value.trim(),
+    unidad: document.getElementById('drw-p-unidad').value,
+    rendimiento: document.getElementById('drw-p-rendimiento').value,
+    ingredientes,
+    notas: document.getElementById('drw-p-notas').value.trim()
+  };
+
+  try {
+    if (id) { await api('PUT', '/preparaciones/' + id, body); toast('Preparación actualizada'); }
+    else { await api('POST', '/preparaciones', body); toast('Preparación creada'); }
+    closePrepDrawer();
+    await loadMargenes();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deletePrep(id, nombre) {
+  if (!confirm(`¿Eliminar "${nombre}"?`)) return;
+  try {
+    await api('DELETE', '/preparaciones/' + id);
+    toast('Preparación eliminada');
+    await loadMargenes();
+  } catch (e) { toast(e.message, 'error'); }
+}
+// ═══════════════════════════════════════════════════════ INFO RESTAURANTE ═
+async function loadInfo() {
+  try {
+    const data = await api('GET', '/info');
+    document.getElementById('info-nombre').value = data.nombre || '';
+    document.getElementById('info-rut').value = data.rut || '';
+    document.getElementById('info-direccion').value = data.direccion || '';
+    document.getElementById('info-concepto').value = data.concepto || '';
+    document.getElementById('info-telefono').value = data.telefono || '';
+    document.getElementById('info-whatsapp').value = data.whatsapp || '';
+    document.getElementById('info-email').value = data.email || '';
+    document.getElementById('info-horario').value = data.horario || '';
+    document.getElementById('info-instagram').value = data.instagram || '';
+    document.getElementById('info-facebook').value = data.facebook || '';
+    document.getElementById('info-sitioweb').value = data.sitioWeb || '';
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function saveInfo() {
+  try {
+    await api('PUT', '/info', {
+      nombre: document.getElementById('info-nombre').value.trim(),
+      rut: document.getElementById('info-rut').value.trim(),
+      direccion: document.getElementById('info-direccion').value.trim(),
+      concepto: document.getElementById('info-concepto').value.trim(),
+      telefono: document.getElementById('info-telefono').value.trim(),
+      whatsapp: document.getElementById('info-whatsapp').value.trim(),
+      email: document.getElementById('info-email').value.trim(),
+      horario: document.getElementById('info-horario').value.trim(),
+      instagram: document.getElementById('info-instagram').value.trim(),
+      facebook: document.getElementById('info-facebook').value.trim(),
+      sitioWeb: document.getElementById('info-sitioweb').value.trim()
+    });
+    toast('Información guardada');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════ GASTOS FIJOS ════
+const FREQ_A_MENSUAL = { diario: 30, semanal: 4.33, mensual: 1, bimestral: 0.5, trimestral: 0.333, anual: 1/12 };
+
+async function loadGastos() {
+  try {
+    const gastos = await api('GET', '/gastos-fijos');
+    renderGastos(gastos);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function renderGastos(gastos) {
+  const tbody = document.getElementById('gasto-table-body');
+  if (!gastos.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><i class="bi bi-cash-stack"></i><p>No hay gastos registrados.</p></div></td></tr>`;
+    document.getElementById('gasto-total-mensual').textContent = '$0';
+    document.getElementById('gasto-total-anual').textContent = '$0';
+    document.getElementById('gasto-count').textContent = '0';
+    return;
+  }
+
+  let totalMensual = 0;
+  gastos.forEach(g => { totalMensual += g.monto * (FREQ_A_MENSUAL[g.frecuencia] || 1); });
+
+  document.getElementById('gasto-total-mensual').textContent = '$' + Math.round(totalMensual).toLocaleString('es-CL');
+  document.getElementById('gasto-total-anual').textContent = '$' + Math.round(totalMensual * 12).toLocaleString('es-CL');
+  document.getElementById('gasto-count').textContent = gastos.length;
+
+  const FREQ_LABEL = { diario:'Diario', semanal:'Semanal', mensual:'Mensual', bimestral:'Bimestral', trimestral:'Trimestral', anual:'Anual' };
+  tbody.innerHTML = gastos.map(g => {
+    const equiv = g.monto * (FREQ_A_MENSUAL[g.frecuencia] || 1);
+    return `<tr>
+      <td><strong>${g.nombre}</strong></td>
+      <td>${g.categoria || '—'}</td>
+      <td><span class="badge badge-gray">${FREQ_LABEL[g.frecuencia] || g.frecuencia}</span></td>
+      <td>$${g.monto.toLocaleString('es-CL')}</td>
+      <td style="color:var(--muted)">$${Math.round(equiv).toLocaleString('es-CL')}/mes</td>
+      <td style="font-size:0.83rem;color:var(--muted)">${g.notas || '—'}</td>
+      <td style="text-align:right;white-space:nowrap">
+        <button class="btn btn-outline btn-sm btn-icon" onclick="editGasto('${g.id}')" title="Editar"><i class="bi bi-pencil"></i></button>
+        <button class="btn btn-outline btn-sm btn-icon" onclick="deleteGasto('${g.id}')" title="Eliminar" style="margin-left:4px"><i class="bi bi-trash"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+let _gastosCache = [];
+
+function openGastoModal(id) {
+  const g = id ? _gastosCache.find(x => x.id === id) : null;
+  document.getElementById('modal-gasto-title').textContent = g ? 'Editar Gasto Fijo' : 'Nuevo Gasto Fijo';
+  document.getElementById('gasto-id').value = g?.id || '';
+  document.getElementById('gasto-nombre').value = g?.nombre || '';
+  document.getElementById('gasto-categoria').value = g?.categoria || '';
+  document.getElementById('gasto-monto').value = g?.monto || '';
+  document.getElementById('gasto-frecuencia').value = g?.frecuencia || 'mensual';
+  document.getElementById('gasto-notas').value = g?.notas || '';
+  openModal('modal-gasto');
+}
+
+async function editGasto(id) {
+  if (!_gastosCache.length) _gastosCache = await api('GET', '/gastos-fijos');
+  openGastoModal(id);
+}
+
+async function saveGasto() {
+  const id = document.getElementById('gasto-id').value;
+  const body = {
+    nombre: document.getElementById('gasto-nombre').value.trim(),
+    categoria: document.getElementById('gasto-categoria').value.trim(),
+    monto: parseFloat(document.getElementById('gasto-monto').value) || 0,
+    frecuencia: document.getElementById('gasto-frecuencia').value,
+    notas: document.getElementById('gasto-notas').value.trim()
+  };
+  if (!body.nombre) { toast('El nombre es requerido', 'error'); return; }
+  try {
+    if (id) await api('PUT', '/gastos-fijos/' + id, body);
+    else await api('POST', '/gastos-fijos', body);
+    toast(id ? 'Gasto actualizado' : 'Gasto agregado');
+    closeModal('modal-gasto');
+    _gastosCache = [];
+    await loadGastos();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteGasto(id) {
+  if (!confirm('¿Eliminar este gasto?')) return;
+  try {
+    await api('DELETE', '/gastos-fijos/' + id);
+    toast('Gasto eliminado');
+    _gastosCache = [];
+    await loadGastos();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════ REUNIONES ════════
+async function loadReuniones() {
+  try {
+    const reuniones = await api('GET', '/reuniones');
+    renderReuniones(reuniones);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function renderReuniones(reuniones) {
+  const tbody = document.getElementById('reu-table-body');
+  if (!reuniones.length) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><i class="bi bi-journal-text"></i><p>No hay reuniones registradas. Creá la primera.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = reuniones.map(r => `<tr>
+    <td style="white-space:nowrap"><strong>${r.fecha}</strong></td>
+    <td>${r.titulo || '—'}</td>
+    <td style="max-width:280px;white-space:pre-wrap;font-size:0.85rem">${r.temas || '—'}</td>
+    <td style="max-width:240px;white-space:pre-wrap;font-size:0.85rem;color:var(--primary)">${r.compromisos || '—'}</td>
+    <td style="text-align:right;white-space:nowrap">
+      <button class="btn btn-outline btn-sm btn-icon" onclick="editReunion('${r.id}')" title="Editar"><i class="bi bi-pencil"></i></button>
+      <button class="btn btn-outline btn-sm btn-icon" onclick="deleteReunion('${r.id}')" title="Eliminar" style="margin-left:4px"><i class="bi bi-trash"></i></button>
+    </td>
+  </tr>`).join('');
+}
+
+let _reunionesCache = [];
+
+function openReuModal() { showReuForm(null); }
+
+async function editReunion(id) {
+  if (!_reunionesCache.length) _reunionesCache = await api('GET', '/reuniones');
+  const r = _reunionesCache.find(x => x.id === id);
+  showReuForm(r);
+}
+
+function showReuForm(r) {
+  document.getElementById('reu-form-title').textContent = r ? 'Editar Reunión' : 'Nueva Reunión';
+  document.getElementById('reu-id').value = r?.id || '';
+  document.getElementById('reu-fecha').value = r?.fecha || new Date().toISOString().split('T')[0];
+  document.getElementById('reu-titulo').value = r?.titulo || '';
+  document.getElementById('reu-temas').value = r?.temas || '';
+  document.getElementById('reu-compromisos').value = r?.compromisos || '';
+  document.getElementById('reu-notas').value = r?.notas || '';
+  document.getElementById('reu-list-view').style.display = 'none';
+  document.getElementById('reu-form-view').style.display = '';
+}
+
+function showReuList() {
+  document.getElementById('reu-list-view').style.display = '';
+  document.getElementById('reu-form-view').style.display = 'none';
+  _reunionesCache = [];
+  loadReuniones();
+}
+
+async function saveReunion() {
+  const id = document.getElementById('reu-id').value;
+  const body = {
+    fecha: document.getElementById('reu-fecha').value,
+    titulo: document.getElementById('reu-titulo').value.trim(),
+    temas: document.getElementById('reu-temas').value.trim(),
+    compromisos: document.getElementById('reu-compromisos').value.trim(),
+    notas: document.getElementById('reu-notas').value.trim()
+  };
+  if (!body.fecha) { toast('La fecha es requerida', 'error'); return; }
+  try {
+    if (id) await api('PUT', '/reuniones/' + id, body);
+    else await api('POST', '/reuniones', body);
+    toast(id ? 'Reunión actualizada' : 'Reunión guardada');
+    showReuList();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteReunion(id) {
+  if (!confirm('¿Eliminar esta reunión?')) return;
+  try {
+    await api('DELETE', '/reuniones/' + id);
+    toast('Reunión eliminada');
+    _reunionesCache = [];
+    await loadReuniones();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════ ÁREAS ═══════════
+async function loadAreas() {
+  try {
+    state.areas = await api('GET', '/areas');
+    renderAreas();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function renderAreas() {
+  const tbody = document.getElementById('area-table-body');
+  if (!tbody) return;
+  if (!state.areas.length) {
+    tbody.innerHTML = `<tr><td colspan="2"><div class="empty-state"><i class="bi bi-diagram-3"></i><p>No hay áreas. Crea la primera (Cocina, Barra, Salón...).</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = state.areas.map(a => `<tr>
+    <td><strong>${a.nombre}</strong></td>
+    <td style="text-align:right">
+      <button class="btn btn-outline btn-sm btn-icon" onclick="editArea('${a.id}','${a.nombre.replace(/'/g,"\\'")}')"><i class="bi bi-pencil"></i></button>
+      <button class="btn btn-outline btn-sm btn-icon" onclick="deleteArea('${a.id}')" style="margin-left:4px"><i class="bi bi-trash"></i></button>
+    </td>
+  </tr>`).join('');
+}
+
+function openAreaModal(id, nombre) {
+  document.getElementById('modal-area-title').textContent = id ? 'Editar Área' : 'Nueva Área';
+  document.getElementById('area-id').value = id || '';
+  document.getElementById('area-nombre').value = nombre || '';
+  openModal('modal-area');
+}
+function editArea(id, nombre) { openAreaModal(id, nombre); }
+
+async function saveArea() {
+  const id = document.getElementById('area-id').value;
+  const nombre = document.getElementById('area-nombre').value.trim();
+  if (!nombre) { toast('El nombre es requerido', 'error'); return; }
+  try {
+    if (id) await api('PUT', '/areas/' + id, { nombre });
+    else await api('POST', '/areas', { nombre });
+    toast(id ? 'Área actualizada' : 'Área creada');
+    closeModal('modal-area');
+    state.areas = [];
+    await loadAreas();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteArea(id) {
+  if (!confirm('¿Eliminar esta área?')) return;
+  try {
+    await api('DELETE', '/areas/' + id);
+    toast('Área eliminada');
+    state.areas = [];
+    await loadAreas();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════ USUARIOS ═════════
+async function loadUsuarios() {
+  try {
+    const usuarios = await api('GET', '/usuarios');
+    renderUsuarios(usuarios);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function renderUsuarios(usuarios) {
+  const tbody = document.getElementById('usuario-table-body');
+  if (!tbody) return;
+  if (!usuarios.length) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><i class="bi bi-people"></i><p>No hay usuarios adicionales. Solo vos tenés acceso.</p></div></td></tr>`;
+    return;
+  }
+  const ROL_LABEL = { admin: 'Administrador', operador: 'Operador' };
+  tbody.innerHTML = usuarios.map(u => `<tr>
+    <td><strong>${u.email}</strong></td>
+    <td>${u.displayName || '—'}</td>
+    <td><span class="badge badge-gray">${ROL_LABEL[u.rol] || u.rol}</span></td>
+    <td style="font-size:0.83rem;color:var(--muted)">${u.agregadoPor || '—'}</td>
+    <td style="text-align:right">
+      <button class="btn btn-outline btn-sm" onclick="revocarUsuario('${u.uid}','${u.email}')" style="color:var(--danger);border-color:var(--danger)">
+        <i class="bi bi-person-x"></i> Revocar
+      </button>
+    </td>
+  </tr>`).join('');
+}
+
+function openUsuarioModal() {
+  document.getElementById('usuario-email').value = '';
+  document.getElementById('usuario-rol').value = 'operador';
+  openModal('modal-usuario');
+}
+
+async function saveUsuario() {
+  const email = document.getElementById('usuario-email').value.trim();
+  const rol = document.getElementById('usuario-rol').value;
+  if (!email) { toast('El email es requerido', 'error'); return; }
+  try {
+    await api('POST', '/usuarios', { email, rol });
+    toast(`Usuario ${email} agregado correctamente`);
+    closeModal('modal-usuario');
+    await loadUsuarios();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function revocarUsuario(uid, email) {
+  if (!confirm(`¿Revocar acceso a ${email}?`)) return;
+  try {
+    await api('DELETE', '/usuarios/' + uid);
+    toast('Acceso revocado');
+    await loadUsuarios();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════ BOOT ════════════
+initFirebase();
+</script>
+</body>
+</html>
