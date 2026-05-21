@@ -1750,7 +1750,8 @@ async function loadSuperadminClientes() {
     const res = await fetch('/api/superadmin/clientes', {
       headers: { 'Authorization': `Bearer ${token}` }
     });
-    const clientes = await res.json();
+    const data = await res.json();
+    const clientes = Array.isArray(data) ? data : [];
 
     const bar = document.getElementById('superadmin-bar');
     bar.style.display = 'flex';
