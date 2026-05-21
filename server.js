@@ -7,12 +7,18 @@ const path = require('path');
 let serviceAccount;
 try {
   if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
+    serviceAccount = JSON.parse(raw);
+    // Vercel a veces escapa los \n como \\n en la private_key
+    if (serviceAccount.private_key) {
+      serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+    }
   } else {
     serviceAccount = require('./firebase-service-account.json');
   }
 } catch (e) {
   console.error('ERROR: No se encontró la configuración de Firebase Admin.');
+  console.error('Detalle:', e.message);
   console.error('Creá el archivo firebase-service-account.json o definí FIREBASE_SERVICE_ACCOUNT en .env');
   process.exit(1);
 }
