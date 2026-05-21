@@ -5,11 +5,10 @@ const path = require('path');
 
 // ─── Firebase Admin Init ──────────────────────────────────────────────────────
 let serviceAccount;
+let firebaseInitError = null;
 try {
   if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-    const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
-    serviceAccount = JSON.parse(raw);
-    // Vercel a veces escapa los \n como \\n en la private_key
+    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
     if (serviceAccount.private_key) {
       serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
     }
@@ -17,19 +16,29 @@ try {
     serviceAccount = require('./firebase-service-account.json');
   }
 } catch (e) {
-  console.error('ERROR: No se encontró la configuración de Firebase Admin.');
-  console.error('Detalle:', e.message);
-  console.error('Creá el archivo firebase-service-account.json o definí FIREBASE_SERVICE_ACCOUNT en .env');
-  process.exit(1);
+  firebaseInitError = e.message;
+  console.error('Firebase init error:', e.message);
 }
 
-admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
-const db = admin.firestore();
+if (serviceAccount) {
+  admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+}
+const db = serviceAccount ? admin.firestore() : null;
 const TS = admin.firestore.FieldValue.serverTimestamp;
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(__dirname));
+
+app.get('/api/health', (req, res) => {
+  res.json({
+    ok: !firebaseInitError,
+    error: firebaseInitError,
+    hasServiceAccount: !!process.env.FIREBASE_SERVICE_ACCOUNT,
+    hasClientConfig: !!process.env.FIREBASE_CLIENT_CONFIG,
+    serviceAccountLength: process.env.FIREBASE_SERVICE_ACCOUNT?.length
+  });
+});
 
 // ─── Auth Middleware ──────────────────────────────────────────────────────────
 async function requireAuth(req, res, next) {
