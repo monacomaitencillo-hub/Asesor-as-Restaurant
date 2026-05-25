@@ -3073,8 +3073,8 @@ function filterRecetas() {
   const cat = document.getElementById('mrg-filter-cat').value;
   const mrg = document.getElementById('mrg-filter-mrg').value;
   let list = state.margenes.filter(m =>
-    (!q || m.nombre.toLowerCase().includes(q) || (m.categoria||'').toLowerCase().includes(q)) &&
-    (!cat || m.categoria === cat) &&
+    (!q || m.nombre.toLowerCase().includes(q) || (m.categoriaMenu||'').toLowerCase().includes(q)) &&
+    (!cat || m.categoriaMenu === cat) &&
     (!mrg || (mrg === 'high' && m.margen >= 70) || (mrg === 'mid' && m.margen >= 50 && m.margen < 70) || (mrg === 'low' && m.margen < 50))
   );
   renderRecetasGrid(list);
