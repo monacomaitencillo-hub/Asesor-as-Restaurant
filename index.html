@@ -1483,16 +1483,9 @@
   </div>
   <div class="drawer-body">
     <input type="hidden" id="drw-r-id" />
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Nombre del producto *</label>
-        <input type="text" id="drw-r-nombre" class="form-control" placeholder="Ej: Pasta alfredo" />
-      </div>
-      <div class="form-group">
-        <label class="form-label">Categoría</label>
-        <input type="text" id="drw-r-cat" class="form-control" list="drw-r-cat-list" placeholder="Ej: Platos de fondo" />
-        <datalist id="drw-r-cat-list"></datalist>
-      </div>
+    <div class="form-group">
+      <label class="form-label">Nombre del producto *</label>
+      <input type="text" id="drw-r-nombre" class="form-control" placeholder="Ej: Pasta alfredo" />
     </div>
     <div class="form-group">
       <label class="form-label">Método / Subcategoría</label>
@@ -2136,9 +2129,6 @@ function syncCatDatalist() {
   const current = sel.value;
   sel.innerHTML = '<option value="">— Sin categoría —</option>' +
     (state.categorias || []).map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
-  // También actualiza el datalist de recetas en márgenes
-  const dl = document.getElementById('drw-r-cat-list');
-  if (dl) dl.innerHTML = (state.categorias || []).map(c => `<option value="${c.nombre}">`).join('');
   if (current) sel.value = current;
 }
 
@@ -3000,11 +2990,13 @@ async function loadMargenes() {
     renderRecetasGrid();
     renderPrepsGrid();
     renderMrgStats();
-    // Populate category filter
-    const cats = [...new Set(recetas.map(m => m.categoria).filter(Boolean))];
+    // Populate category filter (ordenado por orden de carta)
+    const catMap = Object.fromEntries(catMenu.map(c => [c.id, c]));
+    const cats = [...new Set(recetas.map(m => m.categoriaMenuId).filter(Boolean))]
+      .sort((a, b) => (catMap[a]?.orden ?? 99) - (catMap[b]?.orden ?? 99));
     const sel = document.getElementById('mrg-filter-cat');
     sel.innerHTML = '<option value="">Todas las categorías</option>' +
-      cats.map(c => `<option value="${c}">${c}</option>`).join('');
+      cats.map(c => `<option value="${catMap[c]?.nombre}">${catMap[c]?.nombre}</option>`).join('');
   } catch (e) { toast(e.message, 'error'); }
 }
 
@@ -3098,14 +3090,10 @@ function openRecetaDrawer(receta) {
   document.getElementById('drw-receta-title').textContent = receta ? 'Editar receta' : 'Nueva receta';
   document.getElementById('drw-r-id').value = receta?.id || '';
   document.getElementById('drw-r-nombre').value = receta?.nombre || '';
-  document.getElementById('drw-r-cat').value = receta?.categoria || '';
   document.getElementById('drw-r-metodo').value = receta?.metodo || '';
   document.getElementById('drw-r-precio').value = receta?.precioVenta || '';
   document.getElementById('drw-r-porciones').value = receta?.porciones || 1;
   document.getElementById('drw-r-notas').value = receta?.notas || '';
-  // Populate category datalist
-  const cats = [...new Set(state.margenes.map(m => m.categoria).filter(Boolean))];
-  document.getElementById('drw-r-cat-list').innerHTML = cats.map(c => `<option value="${c}">`).join('');
   // Populate sección de carta select
   const catMenuSel = document.getElementById('drw-r-cat-menu');
   catMenuSel.innerHTML = '<option value="">— Sin sección —</option>' +
@@ -3239,7 +3227,7 @@ async function saveReceta() {
   const catMenuSel = document.getElementById('drw-r-cat-menu');
   const body = {
     nombre,
-    categoria: document.getElementById('drw-r-cat').value.trim(),
+    categoria: catMenuSel.value ? catMenuSel.selectedOptions[0]?.text : '',
     metodo: document.getElementById('drw-r-metodo').value.trim(),
     precioVenta: document.getElementById('drw-r-precio').value,
     porciones: document.getElementById('drw-r-porciones').value,
