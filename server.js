@@ -562,7 +562,7 @@ app.get('/api/margenes', requireAuth, async (req, res) => {
 
 app.post('/api/margenes', requireAuth, async (req, res) => {
   try {
-    const { nombre, categoria, precioVenta, ingredientes, porciones, notas } = req.body;
+    const { nombre, categoria, precioVenta, ingredientes, porciones, notas, categoriaMenuId, categoriaMenu } = req.body;
     const pv = parseFloat(precioVenta) || 0;
     const { costoTotal, costoPorcion, margen } = calcularMargen(ingredientes, porciones, pv);
 
@@ -576,6 +576,8 @@ app.post('/api/margenes', requireAuth, async (req, res) => {
       costoPorcion,
       margen,
       notas: notas || '',
+      categoriaMenuId: categoriaMenuId || '',
+      categoriaMenu: categoriaMenu || '',
       creadoEn: TS(),
       actualizadoEn: TS()
     };
@@ -586,7 +588,7 @@ app.post('/api/margenes', requireAuth, async (req, res) => {
 
 app.put('/api/margenes/:id', requireAuth, async (req, res) => {
   try {
-    const { nombre, categoria, precioVenta, ingredientes, porciones, notas } = req.body;
+    const { nombre, categoria, precioVenta, ingredientes, porciones, notas, categoriaMenuId, categoriaMenu } = req.body;
     const pv = parseFloat(precioVenta) || 0;
     const { costoTotal, costoPorcion, margen } = calcularMargen(ingredientes, porciones, pv);
 
@@ -600,6 +602,8 @@ app.put('/api/margenes/:id', requireAuth, async (req, res) => {
       costoPorcion,
       margen,
       notas: notas || '',
+      categoriaMenuId: categoriaMenuId || '',
+      categoriaMenu: categoriaMenu || '',
       actualizadoEn: TS()
     });
     res.json({ ok: true });
@@ -609,6 +613,41 @@ app.put('/api/margenes/:id', requireAuth, async (req, res) => {
 app.delete('/api/margenes/:id', requireAuth, async (req, res) => {
   try {
     await col(req, 'margenes').doc(req.params.id).delete();
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─── CATEGORÍAS DE CARTA ──────────────────────────────────────────────────────
+app.get('/api/categorias-menu', requireAuth, async (req, res) => {
+  try {
+    const snap = await col(req, 'categoriasMenu').orderBy('orden').get();
+    res.json(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/categorias-menu', requireAuth, async (req, res) => {
+  try {
+    const nombre = req.body.nombre?.trim();
+    if (!nombre) return res.status(400).json({ error: 'Nombre requerido' });
+    const orden = parseInt(req.body.orden) || 0;
+    const ref = await col(req, 'categoriasMenu').add({ nombre, orden, creadoEn: TS() });
+    res.json({ id: ref.id, nombre, orden });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/categorias-menu/:id', requireAuth, async (req, res) => {
+  try {
+    const nombre = req.body.nombre?.trim();
+    if (!nombre) return res.status(400).json({ error: 'Nombre requerido' });
+    const orden = parseInt(req.body.orden) || 0;
+    await col(req, 'categoriasMenu').doc(req.params.id).update({ nombre, orden });
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/categorias-menu/:id', requireAuth, async (req, res) => {
+  try {
+    await col(req, 'categoriasMenu').doc(req.params.id).delete();
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });

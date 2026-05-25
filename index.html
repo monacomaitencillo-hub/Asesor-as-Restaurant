@@ -582,6 +582,9 @@
       <div class="nav-item" data-section="margenes">
         <i class="bi bi-graph-up-arrow"></i> Márgenes
       </div>
+      <div class="nav-item" data-section="catMenu">
+        <i class="bi bi-card-list"></i> Categorías de Carta
+      </div>
       <div class="nav-item" data-section="gastos">
         <i class="bi bi-cash-stack"></i> Gastos Fijos
       </div>
@@ -966,6 +969,30 @@
             </div>
             <div id="stock-list">
               <div class="loading-overlay"><div class="spinner spinner-dark"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ CATEGORÍAS DE CARTA ════════ -->
+      <div class="section" id="s-catMenu">
+        <div class="section-header">
+          <h2>Categorías de Carta</h2>
+          <button class="btn btn-primary" onclick="openCatMenuModal()">
+            <i class="bi bi-plus"></i> Nueva sección
+          </button>
+        </div>
+        <div class="card" style="max-width:520px">
+          <div class="card-body" style="padding:0">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>Nombre</th><th style="width:70px;text-align:center">Orden</th><th style="width:80px"></th></tr>
+                </thead>
+                <tbody id="cat-menu-table-body">
+                  <tr><td colspan="3"><div class="loading-overlay"><div class="spinner spinner-dark"></div></div></td></tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -1372,6 +1399,31 @@
   </div>
 </div>
 
+<!-- Modal Categoría de Carta -->
+<div class="modal-overlay" id="modal-cat-menu">
+  <div class="modal-box" style="max-width:400px">
+    <div class="modal-header">
+      <h3 id="modal-cat-menu-title">Nueva sección</h3>
+      <button class="btn-close-modal" onclick="closeModal('modal-cat-menu')"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="cat-menu-id" />
+      <div class="form-group">
+        <label class="form-label">Nombre</label>
+        <input type="text" id="cat-menu-nombre" class="form-control" placeholder="Ej: Tapeos/Entrantes, Platos Jeró..." />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Orden de aparición</label>
+        <input type="number" id="cat-menu-orden" class="form-control" min="0" step="1" placeholder="1, 2, 3..." />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-cat-menu')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveCatMenu()">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Proveedor -->
 <div class="modal-overlay" id="modal-prov">
   <div class="modal-box">
@@ -1445,6 +1497,12 @@
     <div class="form-group">
       <label class="form-label">Método / Subcategoría</label>
       <input type="text" id="drw-r-metodo" class="form-control" placeholder="— Sin método —" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Sección de Carta</label>
+      <select id="drw-r-cat-menu" class="form-control">
+        <option value="">— Sin sección —</option>
+      </select>
     </div>
     <div class="form-row">
       <div class="form-group">
@@ -1683,6 +1741,7 @@ const state = {
   areas: [],
   alertas: [],
   inventarios: [],
+  categoriasMenu: [],
   alertasFilter: false
 };
 
@@ -1880,6 +1939,7 @@ const sectionTitles = {
   alertas: 'Alertas',
   inventarios: 'Inventarios',
   margenes: 'Márgenes',
+  catMenu: 'Categorías de Carta',
   gastos: 'Gastos Fijos',
   reuniones: 'Reuniones de Asesoría',
   areas: 'Áreas de Inventario',
@@ -1903,6 +1963,7 @@ function navigate(section) {
   if (section === 'alertas') loadAlertas();
   if (section === 'inventarios') { loadInventarios(); loadStock(); }
   if (section === 'margenes') loadMargenes();
+  if (section === 'catMenu') loadCatMenu();
   if (section === 'gastos') loadGastos();
   if (section === 'reuniones') loadReuniones();
   if (section === 'areas') loadAreas();
@@ -2112,6 +2173,67 @@ async function deleteCat(id, nombre) {
     await api('DELETE', '/categorias/' + id);
     toast('Categoría eliminada');
     await loadCategorias();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════ CATEGORÍAS DE CARTA ══
+
+async function loadCatMenu() {
+  try {
+    state.categoriasMenu = await api('GET', '/categorias-menu');
+    renderCatMenu();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function renderCatMenu() {
+  const tbody = document.getElementById('cat-menu-table-body');
+  if (!state.categoriasMenu.length) {
+    tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state"><i class="bi bi-card-list"></i><p>No hay secciones. Creá la primera.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = state.categoriasMenu.map(c => `<tr>
+    <td><strong>${c.nombre}</strong></td>
+    <td style="text-align:center">${c.orden ?? ''}</td>
+    <td style="text-align:right">
+      <button class="btn btn-outline btn-sm btn-icon" onclick="openCatMenuModal('${c.id}','${c.nombre.replace(/'/g,"\\'")}',${c.orden ?? 0})"><i class="bi bi-pencil"></i></button>
+      <button class="btn btn-outline btn-sm btn-icon" onclick="deleteCatMenu('${c.id}','${c.nombre.replace(/'/g,"\\'")}'')" style="margin-left:4px"><i class="bi bi-trash"></i></button>
+    </td>
+  </tr>`).join('');
+}
+
+function openCatMenuModal(id, nombre, orden) {
+  document.getElementById('modal-cat-menu-title').textContent = id ? 'Editar sección' : 'Nueva sección';
+  document.getElementById('cat-menu-id').value = id || '';
+  document.getElementById('cat-menu-nombre').value = nombre || '';
+  document.getElementById('cat-menu-orden').value = orden ?? '';
+  openModal('modal-cat-menu');
+  setTimeout(() => document.getElementById('cat-menu-nombre').focus(), 100);
+}
+
+async function saveCatMenu() {
+  const nombre = document.getElementById('cat-menu-nombre').value.trim();
+  if (!nombre) { toast('El nombre es requerido', 'error'); return; }
+  const id = document.getElementById('cat-menu-id').value;
+  const orden = parseInt(document.getElementById('cat-menu-orden').value) || 0;
+  try {
+    if (id) {
+      await api('PUT', '/categorias-menu/' + id, { nombre, orden });
+      toast('Sección actualizada');
+    } else {
+      await api('POST', '/categorias-menu', { nombre, orden });
+      toast('Sección creada');
+    }
+    closeModal('modal-cat-menu');
+    await loadCatMenu();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteCatMenu(id, nombre) {
+  if (!confirm(`¿Eliminar la sección "${nombre}"?`)) return;
+  try {
+    await api('DELETE', '/categorias-menu/' + id);
+    toast('Sección eliminada');
+    await loadCatMenu();
   } catch (e) { toast(e.message, 'error'); }
 }
 
@@ -2865,14 +2987,16 @@ function mrgPillClass(m) { return m >= 70 ? 'high' : m >= 50 ? 'mid' : 'low'; }
 
 async function loadMargenes() {
   try {
-    const [ings, preps, recetas] = await Promise.all([
+    const [ings, preps, recetas, catMenu] = await Promise.all([
       state.ingredientes.length ? Promise.resolve(state.ingredientes) : api('GET', '/ingredientes'),
       api('GET', '/preparaciones'),
-      api('GET', '/margenes')
+      api('GET', '/margenes'),
+      api('GET', '/categorias-menu')
     ]);
     state.ingredientes = ings;
     state.preparaciones = preps;
     state.margenes = recetas;
+    state.categoriasMenu = catMenu;
     renderRecetasGrid();
     renderPrepsGrid();
     renderMrgStats();
@@ -2982,6 +3106,12 @@ function openRecetaDrawer(receta) {
   // Populate category datalist
   const cats = [...new Set(state.margenes.map(m => m.categoria).filter(Boolean))];
   document.getElementById('drw-r-cat-list').innerHTML = cats.map(c => `<option value="${c}">`).join('');
+  // Populate sección de carta select
+  const catMenuSel = document.getElementById('drw-r-cat-menu');
+  catMenuSel.innerHTML = '<option value="">— Sin sección —</option>' +
+    (state.categoriasMenu || []).map(c =>
+      `<option value="${c.id}"${receta?.categoriaMenuId === c.id ? ' selected' : ''}>${c.nombre}</option>`
+    ).join('');
   // Build rows
   const list = document.getElementById('drw-r-ing-list');
   list.innerHTML = '';
@@ -3106,6 +3236,7 @@ async function saveReceta() {
   });
 
   const id = document.getElementById('drw-r-id').value;
+  const catMenuSel = document.getElementById('drw-r-cat-menu');
   const body = {
     nombre,
     categoria: document.getElementById('drw-r-cat').value.trim(),
@@ -3113,7 +3244,9 @@ async function saveReceta() {
     precioVenta: document.getElementById('drw-r-precio').value,
     porciones: document.getElementById('drw-r-porciones').value,
     ingredientes,
-    notas: document.getElementById('drw-r-notas').value.trim()
+    notas: document.getElementById('drw-r-notas').value.trim(),
+    categoriaMenuId: catMenuSel.value || '',
+    categoriaMenu: catMenuSel.value ? catMenuSel.selectedOptions[0]?.text : ''
   };
 
   try {
