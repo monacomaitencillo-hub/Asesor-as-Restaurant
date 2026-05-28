@@ -3,6 +3,8 @@ const express = require('express');
 const admin = require('firebase-admin');
 const path = require('path');
 
+const ILA_RATES = { alimento: 0, carne: 0.05, cerveza_vino: 0.205, licor: 0.315 };
+
 // ─── Firebase Admin Init ──────────────────────────────────────────────────────
 let serviceAccount;
 let firebaseInitError = null;
@@ -170,8 +172,10 @@ app.post('/api/ingredientes/:id/precios', requireAuth, async (req, res) => {
     const flete = parseFloat(fleteNeto) || 0;
     const cant = parseFloat(cantidadCompra) || 1;
     const unidades = parseFloat(unidadesEnvase) || 1;
+    const ingDoc = await col(req, 'ingredientes').doc(req.params.id).get();
+    const tasaILA = ILA_RATES[ingDoc.data()?.tipoImpuesto] || 0;
     const precioConDesc = pn * (1 - desc / 100);
-    const costoUnitario = (precioConDesc + flete) / cant;
+    const costoUnitario = (precioConDesc * (1 + tasaILA) + flete) / cant;
 
     const data = {
       mes,
@@ -206,8 +210,10 @@ app.put('/api/ingredientes/:id/precios/:precioId', requireAuth, async (req, res)
     const flete = parseFloat(fleteNeto) || 0;
     const cant = parseFloat(cantidadCompra) || 1;
     const unidades = parseFloat(unidadesEnvase) || 1;
+    const ingDoc = await col(req, 'ingredientes').doc(req.params.id).get();
+    const tasaILA = ILA_RATES[ingDoc.data()?.tipoImpuesto] || 0;
     const precioConDesc = pn * (1 - desc / 100);
-    const costoUnitario = (precioConDesc + flete) / cant;
+    const costoUnitario = (precioConDesc * (1 + tasaILA) + flete) / cant;
 
     await col(req, 'ingredientes').doc(req.params.id)
       .collection('historialPrecios').doc(req.params.precioId).update({

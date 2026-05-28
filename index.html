@@ -828,7 +828,7 @@
               <div class="card-body">
                 <h4 style="font-weight:800;font-size:1rem;margin-bottom:4px">Historial de precios</h4>
                 <p style="font-size:0.82rem;color:var(--muted);margin-bottom:20px">
-                  Ingresá el precio neto de factura. El costo unitario se calcula automáticamente.
+                  Ingresá el precio neto de factura (sin IVA). Fórmula: <strong>(Precio neto × (1 − desc%) × (1 + ILA) + Flete) ÷ Cantidad</strong>. El IVA no se incluye en el costo.
                 </p>
 
                 <!-- Formulario nuevo precio -->
@@ -2498,18 +2498,31 @@ function renderHistorial(ingId) {
   }).join('');
 }
 
+const ILA_RATES = { alimento: 0, carne: 0.05, cerveza_vino: 0.205, licor: 0.315 };
+
 function recalcPH() {
   const pn = parseFloat(document.getElementById('ph-precio-neto').value) || 0;
   const desc = parseFloat(document.getElementById('ph-descuento').value) || 0;
   const flete = parseFloat(document.getElementById('ph-flete').value) || 0;
   const cant = parseFloat(document.getElementById('ph-cantidad').value) || 1;
+  const tipoImpuesto = document.getElementById('ing-impuesto')?.value || 'alimento';
+  const tasaILA = ILA_RATES[tipoImpuesto] || 0;
+
   const conDesc = pn * (1 - desc / 100);
-  const costoUnitario = (conDesc + flete) / cant;
+  const conILA = conDesc * (1 + tasaILA);
+  const costoUnitario = (conILA + flete) / cant;
+
   const preview = document.getElementById('ph-preview');
   if (pn > 0) {
+    const ilaStr = tasaILA > 0 ? ` × ${(1 + tasaILA).toFixed(3)} <span style="color:var(--muted)">(ILA ${(tasaILA*100).toFixed(1)}%)</span>` : '';
+    const descStr = desc > 0 ? ` × (1 − ${desc}%)` : '';
+    const fleteStr = flete > 0 ? ` + $${fmt(flete)}` : '';
     preview.className = 'ph-preview';
-    preview.innerHTML = `<strong>Costo unitario calculado: $${fmt(costoUnitario)}</strong>
-      <span style="color:var(--muted);margin-left:8px">(${cant} unidades × $${fmt(costoUnitario)} = $${fmt(cant * costoUnitario)})</span>`;
+    preview.innerHTML = `
+      <div style="font-size:0.82rem;color:var(--muted);margin-bottom:6px">
+        ($${fmt(pn)}${descStr}${ilaStr}${fleteStr}) ÷ ${cant} = <strong style="color:var(--text)">$${fmt(costoUnitario)} / unidad</strong>
+      </div>
+      <strong>Costo unitario: $${fmt(costoUnitario)}</strong>`;
   } else {
     preview.innerHTML = '';
   }
