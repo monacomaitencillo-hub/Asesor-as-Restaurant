@@ -2498,7 +2498,16 @@ function renderHistorial(ingId) {
   }).join('');
 }
 
-const ILA_RATES = { alimento: 0, carne: 0.05, cerveza_vino: 0.205, licor: 0.315 };
+const IMP_ADICIONAL = {
+  alimento:          { tasa: 0,     label: '' },
+  carne:             { tasa: 0.05,  label: 'imp.carne 5%' },
+  cerveza_vino:      { tasa: 0.205, label: 'ILA 20.5%' },
+  licor:             { tasa: 0.315, label: 'ILA 31.5%' },
+  bebida_azucarada:  { tasa: 0.18,  label: 'IABA 18%' },
+  bebida_sin_azucar: { tasa: 0.10,  label: 'IABA 10%' },
+  harina:            { tasa: 0.12,  label: 'imp. 12%' },
+  sin_impuesto:      { tasa: 0,     label: '' }
+};
 
 function recalcPH() {
   const pn = parseFloat(document.getElementById('ph-precio-neto').value) || 0;
@@ -2506,21 +2515,20 @@ function recalcPH() {
   const flete = parseFloat(document.getElementById('ph-flete').value) || 0;
   const cant = parseFloat(document.getElementById('ph-cantidad').value) || 1;
   const tipoImpuesto = document.getElementById('ing-impuesto')?.value || 'alimento';
-  const tasaILA = ILA_RATES[tipoImpuesto] || 0;
+  const { tasa, label } = IMP_ADICIONAL[tipoImpuesto] || { tasa: 0, label: '' };
 
   const conDesc = pn * (1 - desc / 100);
-  const conILA = conDesc * (1 + tasaILA);
-  const costoUnitario = (conILA + flete) / cant;
+  const costoUnitario = (conDesc * (1 + tasa) + flete) / cant;
 
   const preview = document.getElementById('ph-preview');
   if (pn > 0) {
-    const ilaStr = tasaILA > 0 ? ` × ${(1 + tasaILA).toFixed(3)} <span style="color:var(--muted)">(ILA ${(tasaILA*100).toFixed(1)}%)</span>` : '';
+    const impStr = tasa > 0 ? ` × ${(1 + tasa).toFixed(3)} <span style="color:var(--muted)">(${label})</span>` : '';
     const descStr = desc > 0 ? ` × (1 − ${desc}%)` : '';
     const fleteStr = flete > 0 ? ` + $${fmt(flete)}` : '';
     preview.className = 'ph-preview';
     preview.innerHTML = `
       <div style="font-size:0.82rem;color:var(--muted);margin-bottom:6px">
-        ($${fmt(pn)}${descStr}${ilaStr}${fleteStr}) ÷ ${cant} = <strong style="color:var(--text)">$${fmt(costoUnitario)} / unidad</strong>
+        ($${fmt(pn)}${descStr}${impStr}${fleteStr}) ÷ ${cant} = <strong style="color:var(--text)">$${fmt(costoUnitario)} / unidad</strong>
       </div>
       <strong>Costo unitario: $${fmt(costoUnitario)}</strong>`;
   } else {
