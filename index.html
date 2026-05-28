@@ -3190,7 +3190,8 @@ function recalcDrwCost() {
   const porciones = parseFloat(document.getElementById('drw-r-porciones')?.value) || 1;
   const precio = parseFloat(document.getElementById('drw-r-precio')?.value) || 0;
   const porcion = total / porciones;
-  const margen = precio > 0 ? ((precio - porcion) / precio) * 100 : 0;
+  const pvNeto = precio / 1.19;
+  const margen = pvNeto > 0 ? ((pvNeto - porcion) / pvNeto) * 100 : 0;
   document.getElementById('drw-r-costo-total').textContent = '$' + fmt(total);
   document.getElementById('drw-r-costo-porcion').textContent = '$' + fmt(porcion);
   const mEl = document.getElementById('drw-r-margen');

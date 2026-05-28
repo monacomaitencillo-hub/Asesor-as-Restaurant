@@ -501,7 +501,8 @@ function calcularMargen(ingredientes, porciones, precioVenta) {
   }, 0);
   const porcionesNum = parseFloat(porciones) || 1;
   const costoPorcion = costoTotal / porcionesNum;
-  const margen = precioVenta > 0 ? ((precioVenta - costoPorcion) / precioVenta) * 100 : 0;
+  const pvNeto = precioVenta / 1.19;
+  const margen = pvNeto > 0 ? ((pvNeto - costoPorcion) / pvNeto) * 100 : 0;
   return { costoTotal, costoPorcion, margen };
 }
 
