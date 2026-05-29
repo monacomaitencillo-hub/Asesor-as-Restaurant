@@ -529,16 +529,34 @@ app.get('/api/preparaciones', requireAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+function calcularCostoPrep(ingredientes, { calcularPromedio, tieneRendAgua, rendAgua, tieneRendAire, rendAire, tieneMerma, merma, rendimiento }) {
+  const ings = ingredientes || [];
+  const totalBruto = ings.reduce((s, i) => s + (parseFloat(i.costoUnitario) || 0) * (parseFloat(i.cantidad) || 0), 0);
+  const costoIng = calcularPromedio && ings.length > 0 ? totalBruto / ings.length : totalBruto;
+  const costoPostAgua = tieneRendAgua && rendAgua > 0 ? costoIng / (1 + rendAgua / 100) : costoIng;
+  const costoPostAire = tieneRendAire && rendAire > 0 ? costoPostAgua / (1 + rendAire / 100) : costoPostAgua;
+  const rend = parseFloat(rendimiento) || 1;
+  const rendEfectivo = tieneMerma && merma > 0 ? rend * (1 - merma / 100) : rend;
+  return { costoTotal: costoPostAire, costoPorUnidad: rendEfectivo > 0 ? costoPostAire / rendEfectivo : 0 };
+}
+
 app.post('/api/preparaciones', requireAuth, async (req, res) => {
   try {
-    const { nombre, categoria, unidad, rendimiento, ingredientes, notas } = req.body;
-    const costoTotal = (ingredientes || []).reduce((s, i) => s + (parseFloat(i.costoUnitario) || 0) * (parseFloat(i.cantidad) || 0), 0);
+    const { nombre, categoria, unidad, rendimiento, ingredientes, notas,
+            calcularPromedio, tieneRendimiento, tieneRendAgua, rendAgua,
+            tieneRendAire, rendAire, tieneMerma, merma } = req.body;
+    const { costoTotal, costoPorUnidad } = calcularCostoPrep(ingredientes, { calcularPromedio, tieneRendAgua, rendAgua, tieneRendAire, rendAire, tieneMerma, merma, rendimiento });
     const rend = parseFloat(rendimiento) || 1;
     const data = {
       nombre: nombre?.trim(), categoria: categoria || '',
       unidad: unidad || 'porción', rendimiento: rend,
       ingredientes: ingredientes || [],
-      costoTotal, costoPorUnidad: costoTotal / rend,
+      costoTotal, costoPorUnidad,
+      calcularPromedio: !!calcularPromedio,
+      tieneRendimiento: !!tieneRendimiento,
+      tieneRendAgua: !!tieneRendAgua, rendAgua: parseFloat(rendAgua) || 0,
+      tieneRendAire: !!tieneRendAire, rendAire: parseFloat(rendAire) || 0,
+      tieneMerma: !!tieneMerma, merma: parseFloat(merma) || 0,
       notas: notas || '', creadoEn: TS(), actualizadoEn: TS()
     };
     const ref = await col(req, 'preparaciones').add(data);
@@ -548,14 +566,21 @@ app.post('/api/preparaciones', requireAuth, async (req, res) => {
 
 app.put('/api/preparaciones/:id', requireAuth, async (req, res) => {
   try {
-    const { nombre, categoria, unidad, rendimiento, ingredientes, notas } = req.body;
-    const costoTotal = (ingredientes || []).reduce((s, i) => s + (parseFloat(i.costoUnitario) || 0) * (parseFloat(i.cantidad) || 0), 0);
+    const { nombre, categoria, unidad, rendimiento, ingredientes, notas,
+            calcularPromedio, tieneRendimiento, tieneRendAgua, rendAgua,
+            tieneRendAire, rendAire, tieneMerma, merma } = req.body;
+    const { costoTotal, costoPorUnidad } = calcularCostoPrep(ingredientes, { calcularPromedio, tieneRendAgua, rendAgua, tieneRendAire, rendAire, tieneMerma, merma, rendimiento });
     const rend = parseFloat(rendimiento) || 1;
     await col(req, 'preparaciones').doc(req.params.id).update({
       nombre: nombre?.trim(), categoria: categoria || '',
       unidad: unidad || 'porción', rendimiento: rend,
       ingredientes: ingredientes || [],
-      costoTotal, costoPorUnidad: costoTotal / rend,
+      costoTotal, costoPorUnidad,
+      calcularPromedio: !!calcularPromedio,
+      tieneRendimiento: !!tieneRendimiento,
+      tieneRendAgua: !!tieneRendAgua, rendAgua: parseFloat(rendAgua) || 0,
+      tieneRendAire: !!tieneRendAire, rendAire: parseFloat(rendAire) || 0,
+      tieneMerma: !!tieneMerma, merma: parseFloat(merma) || 0,
       notas: notas || '', actualizadoEn: TS()
     });
     res.json({ ok: true });
