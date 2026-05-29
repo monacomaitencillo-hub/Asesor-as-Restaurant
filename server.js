@@ -972,6 +972,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 // ─── Fallback ─────────────────────────────────────────────────────────────────
 app.get('*', (_req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
