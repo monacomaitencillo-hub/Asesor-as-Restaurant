@@ -1560,30 +1560,13 @@
   </div>
   <div class="drawer-body">
     <input type="hidden" id="drw-p-id" />
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Nombre *</label>
-        <input type="text" id="drw-p-nombre" class="form-control" placeholder="Ej: Salsa bechamel" />
-      </div>
-      <div class="form-group">
-        <label class="form-label">Categoría</label>
-        <input type="text" id="drw-p-cat" class="form-control" placeholder="Ej: Salsas" />
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Unidad de la preparación</label>
-        <select id="drw-p-unidad" class="form-control">
-          <option>porción</option><option>kg</option><option>g</option>
-          <option>l</option><option>ml</option><option>unidad</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Rendimiento (cuántas unidades produce)</label>
-        <input type="number" id="drw-p-rendimiento" class="form-control" min="0.01" step="0.01" value="1" oninput="recalcPrepCost()" />
-      </div>
+
+    <div class="form-group">
+      <label class="form-label">Nombre del producto *</label>
+      <input type="text" id="drw-p-nombre" class="form-control" placeholder="Ej: Salsa bechamel" />
     </div>
 
+    <!-- Ingredientes -->
     <div class="form-group">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <label class="form-label" style="margin:0">Ingredientes</label>
@@ -1594,10 +1577,23 @@
       <div id="drw-p-ing-list"></div>
     </div>
 
+    <!-- Desglose de costos -->
     <div class="drw-cost-box">
       <div class="drw-cost-row">
-        <span class="drw-cost-label">Costo total</span>
-        <span class="drw-cost-val" id="drw-p-costo-total">$0</span>
+        <span class="drw-cost-label">Costo ingredientes</span>
+        <span class="drw-cost-val" id="drw-p-costo-ing">$0</span>
+      </div>
+      <div class="drw-cost-row" id="drw-p-agua-row" style="display:none">
+        <span class="drw-cost-label" style="color:#2196f3">💧 ÷ Agua (+<span id="drw-p-agua-pct">0</span>%)</span>
+        <span class="drw-cost-val" style="color:#2196f3" id="drw-p-agua-val">$0</span>
+      </div>
+      <div class="drw-cost-row" id="drw-p-aire-row" style="display:none">
+        <span class="drw-cost-label" style="color:#9c27b0">🌬️ ÷ Aire (+<span id="drw-p-aire-pct">0</span>%)</span>
+        <span class="drw-cost-val" style="color:#9c27b0" id="drw-p-aire-val">$0</span>
+      </div>
+      <div class="drw-cost-row" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+        <span class="drw-cost-label"><strong>Costo final</strong></span>
+        <span class="drw-cost-val" id="drw-p-costo-total"><strong>$0</strong></span>
       </div>
       <div class="drw-cost-row">
         <span class="drw-cost-label">Costo por unidad</span>
@@ -1605,7 +1601,80 @@
       </div>
     </div>
 
-    <div class="form-group" style="margin-top:16px">
+    <!-- Porciones -->
+    <div style="display:flex;align-items:center;gap:12px;margin:16px 0">
+      <label class="form-label" style="margin:0;white-space:nowrap">Porciones que rinde:</label>
+      <input type="number" id="drw-p-rendimiento" class="form-control" style="width:100px" min="0.01" step="0.01" value="1" oninput="recalcPrepCost()" />
+    </div>
+
+    <!-- Calcular como promedio -->
+    <div class="form-group">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600">
+        <input type="checkbox" id="drw-p-promedio" onchange="recalcPrepCost()" />
+        Calcular costo como promedio
+      </label>
+      <p style="font-size:0.8rem;color:var(--muted);margin:4px 0 0 24px">En vez de sumar los ingredientes, divide el total entre la cantidad de ingredientes.</p>
+    </div>
+
+    <!-- Tiene rendimiento -->
+    <div class="form-group">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600">
+        <input type="checkbox" id="drw-p-tiene-rend" onchange="toggleRendPrep()" />
+        Tiene rendimiento
+      </label>
+      <div id="drw-p-rend-box" style="display:none;margin-top:12px;padding:14px;border:1px solid var(--border);border-radius:10px;background:var(--bg)">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <label style="font-weight:600;color:#2196f3;margin-bottom:6px;display:block">💧 Rendimiento de agua</label>
+            <p style="font-size:0.78rem;color:var(--muted);margin-bottom:6px">% de aumento de volumen</p>
+            <div style="display:flex;align-items:center;gap:6px">
+              <input type="number" id="drw-p-rend-agua" class="form-control" style="width:80px" value="0" min="0" step="0.1" oninput="recalcPrepCost()" />
+              <span>%</span>
+            </div>
+          </div>
+          <div>
+            <label style="font-weight:600;color:#9c27b0;margin-bottom:6px;display:block">🌬️ Rendimiento de aire</label>
+            <p style="font-size:0.78rem;color:var(--muted);margin-bottom:6px">% de overrun (volumen de aire)</p>
+            <div style="display:flex;align-items:center;gap:6px">
+              <input type="number" id="drw-p-rend-aire" class="form-control" style="width:80px" value="0" min="0" step="0.1" oninput="recalcPrepCost()" />
+              <span>%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tiene merma -->
+    <div class="form-group">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600">
+        <input type="checkbox" id="drw-p-tiene-merma" onchange="toggleMermaPrep()" />
+        Tiene merma
+      </label>
+      <div id="drw-p-merma-box" style="display:none;margin-top:8px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <label class="form-label" style="margin:0">% de merma:</label>
+          <input type="number" id="drw-p-merma" class="form-control" style="width:80px" value="0" min="0" max="99" step="0.1" oninput="recalcPrepCost()" />
+          <span>%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Categoría y Unidad -->
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Categoría</label>
+        <input type="text" id="drw-p-cat" class="form-control" placeholder="Ej: Salsas, Masas..." />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Unidad</label>
+        <select id="drw-p-unidad" class="form-control">
+          <option>porción</option><option>kg</option><option>g</option>
+          <option>l</option><option>ml</option><option>unidad</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
       <label class="form-label">Notas</label>
       <textarea id="drw-p-notas" class="form-control" rows="2" placeholder="Observaciones..."></textarea>
     </div>
@@ -3197,7 +3266,7 @@ function addDrwIngRow(tipo, data) {
   sel.addEventListener('change', update);
   cantInp.addEventListener('input', update);
   list.appendChild(row);
-  recalcDrwCost();
+  update();
 }
 
 function recalcDrwCost() {
@@ -3285,6 +3354,20 @@ function openPrepDrawer(prep) {
   document.getElementById('drw-p-unidad').value = prep?.unidad || 'porción';
   document.getElementById('drw-p-rendimiento').value = prep?.rendimiento || 1;
   document.getElementById('drw-p-notas').value = prep?.notas || '';
+  // Promedio
+  document.getElementById('drw-p-promedio').checked = prep?.calcularPromedio || false;
+  // Rendimiento agua/aire
+  const tieneRend = prep?.tieneRendimiento || false;
+  document.getElementById('drw-p-tiene-rend').checked = tieneRend;
+  document.getElementById('drw-p-rend-box').style.display = tieneRend ? '' : 'none';
+  document.getElementById('drw-p-rend-agua').value = prep?.rendAgua || 0;
+  document.getElementById('drw-p-rend-aire').value = prep?.rendAire || 0;
+  // Merma
+  const tieneMerma = prep?.tieneMerma || false;
+  document.getElementById('drw-p-tiene-merma').checked = tieneMerma;
+  document.getElementById('drw-p-merma-box').style.display = tieneMerma ? '' : 'none';
+  document.getElementById('drw-p-merma').value = prep?.merma || 0;
+
   const list = document.getElementById('drw-p-ing-list');
   list.innerHTML = '';
   if (prep?.ingredientes?.length) {
@@ -3293,6 +3376,18 @@ function openPrepDrawer(prep) {
   recalcPrepCost();
   document.getElementById('drw-prep-overlay').classList.add('open');
   document.getElementById('drw-prep').classList.add('open');
+}
+
+function toggleRendPrep() {
+  const checked = document.getElementById('drw-p-tiene-rend').checked;
+  document.getElementById('drw-p-rend-box').style.display = checked ? '' : 'none';
+  recalcPrepCost();
+}
+
+function toggleMermaPrep() {
+  const checked = document.getElementById('drw-p-tiene-merma').checked;
+  document.getElementById('drw-p-merma-box').style.display = checked ? '' : 'none';
+  recalcPrepCost();
 }
 
 function closePrepDrawer() {
@@ -3344,19 +3439,56 @@ function addDrwPrepIngRow(data) {
   sel.addEventListener('change', update);
   cantInp.addEventListener('input', update);
   list.appendChild(row);
-  recalcPrepCost();
+  update();
 }
 
 function recalcPrepCost() {
-  let total = 0;
-  document.querySelectorAll('#drw-p-ing-list .drw-ing-row').forEach(row => {
+  const rows = document.querySelectorAll('#drw-p-ing-list .drw-ing-row');
+  let totalBruto = 0;
+  rows.forEach(row => {
     const costo = parseFloat(row.querySelector('.drw-ing-select')?.selectedOptions[0]?.dataset?.costo) || 0;
     const cant = parseFloat(row.querySelector('.drw-ing-cant')?.value) || 0;
-    total += costo * cant;
+    totalBruto += costo * cant;
   });
+
+  const isPromedio = document.getElementById('drw-p-promedio')?.checked;
+  const numIng = rows.length || 1;
+  let costoIng = isPromedio ? totalBruto / numIng : totalBruto;
+
+  // Rendimiento agua
+  const tieneRend = document.getElementById('drw-p-tiene-rend')?.checked;
+  const rendAgua = parseFloat(document.getElementById('drw-p-rend-agua')?.value) || 0;
+  const costoPostAgua = tieneRend && rendAgua > 0 ? costoIng / (1 + rendAgua / 100) : costoIng;
+
+  // Rendimiento aire
+  const rendAire = parseFloat(document.getElementById('drw-p-rend-aire')?.value) || 0;
+  const costoPostAire = tieneRend && rendAire > 0 ? costoPostAgua / (1 + rendAire / 100) : costoPostAgua;
+
+  // Merma
+  const tieneMerma = document.getElementById('drw-p-tiene-merma')?.checked;
+  const merma = parseFloat(document.getElementById('drw-p-merma')?.value) || 0;
   const rend = parseFloat(document.getElementById('drw-p-rendimiento')?.value) || 1;
-  document.getElementById('drw-p-costo-total').textContent = '$' + fmt(total);
-  document.getElementById('drw-p-costo-unidad').textContent = '$' + fmt(total / rend);
+  const rendEfectivo = tieneMerma && merma > 0 ? rend * (1 - merma / 100) : rend;
+
+  // Mostrar desglose
+  document.getElementById('drw-p-costo-ing').textContent = '$' + fmt(costoIng);
+
+  const aguaRow = document.getElementById('drw-p-agua-row');
+  aguaRow.style.display = tieneRend && rendAgua > 0 ? '' : 'none';
+  if (tieneRend && rendAgua > 0) {
+    document.getElementById('drw-p-agua-pct').textContent = rendAgua;
+    document.getElementById('drw-p-agua-val').textContent = '$' + fmt(costoPostAgua);
+  }
+
+  const aireRow = document.getElementById('drw-p-aire-row');
+  aireRow.style.display = tieneRend && rendAire > 0 ? '' : 'none';
+  if (tieneRend && rendAire > 0) {
+    document.getElementById('drw-p-aire-pct').textContent = rendAire;
+    document.getElementById('drw-p-aire-val').textContent = '$' + fmt(costoPostAire);
+  }
+
+  document.getElementById('drw-p-costo-total').innerHTML = '<strong>$' + fmt(costoPostAire) + '</strong>';
+  document.getElementById('drw-p-costo-unidad').textContent = '$' + fmt(rendEfectivo > 0 ? costoPostAire / rendEfectivo : 0);
 }
 
 async function savePreparacion() {
@@ -3385,7 +3517,15 @@ async function savePreparacion() {
     unidad: document.getElementById('drw-p-unidad').value,
     rendimiento: document.getElementById('drw-p-rendimiento').value,
     ingredientes,
-    notas: document.getElementById('drw-p-notas').value.trim()
+    notas: document.getElementById('drw-p-notas').value.trim(),
+    calcularPromedio: document.getElementById('drw-p-promedio').checked,
+    tieneRendimiento: document.getElementById('drw-p-tiene-rend').checked,
+    tieneRendAgua: document.getElementById('drw-p-tiene-rend').checked && (parseFloat(document.getElementById('drw-p-rend-agua').value) || 0) > 0,
+    rendAgua: parseFloat(document.getElementById('drw-p-rend-agua').value) || 0,
+    tieneRendAire: document.getElementById('drw-p-tiene-rend').checked && (parseFloat(document.getElementById('drw-p-rend-aire').value) || 0) > 0,
+    rendAire: parseFloat(document.getElementById('drw-p-rend-aire').value) || 0,
+    tieneMerma: document.getElementById('drw-p-tiene-merma').checked,
+    merma: parseFloat(document.getElementById('drw-p-merma').value) || 0
   };
 
   try {
