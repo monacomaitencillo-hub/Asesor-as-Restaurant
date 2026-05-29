@@ -2118,7 +2118,7 @@ function renderUnidades() {
     <td><span class="badge badge-gray">${u.abreviatura}</span></td>
     <td style="text-align:right">
       <button class="btn btn-outline btn-sm btn-icon" onclick="openUnidadModal('${u.id}','${u.nombre.replace(/'/g,"\\'")}','${u.abreviatura}')"><i class="bi bi-pencil"></i></button>
-      <button class="btn btn-outline btn-sm btn-icon" onclick="deleteUnidad('${u.id}','${u.nombre.replace(/'/g,"\\'")}'')" style="margin-left:4px"><i class="bi bi-trash"></i></button>
+      <button class="btn btn-outline btn-sm btn-icon" onclick="deleteUnidad('${u.id}','${u.nombre.replace(/'/g,"\\'")}')" style="margin-left:4px"><i class="bi bi-trash"></i></button>
     </td>
   </tr>`).join('');
 }
