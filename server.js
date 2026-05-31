@@ -231,6 +231,12 @@ app.put('/api/ingredientes/:id/precios/:precioId', requireAuth, async (req, res)
         unidadesEnvase: unidades, costoUnitario
       });
 
+    // Actualizar costo actual del ingrediente
+    await col(req, 'ingredientes').doc(req.params.id).update({
+      costo: costoUnitario,
+      actualizadoEn: TS()
+    });
+
     res.json({ ok: true, costoUnitario });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
