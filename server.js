@@ -759,6 +759,7 @@ app.post('/api/sync/compras', requireAuth, async (req, res) => {
     const iFecha = idx('fechadocto') !== -1 ? idx('fechadocto') : idx('fecha');
     const iExento = idx('exento');
     const iNeto = idx('neto');
+    const iIva = idx('iva');
     const iMonto = headers.findIndex((h, i) => h.includes('monto') && i !== iExento && i !== iNeto);
 
     // Parse data rows
@@ -784,6 +785,7 @@ app.post('/api/sync/compras', requireAuth, async (req, res) => {
         periodo,
         montoExento: parseFloat((r[iExento] || '0').replace(/\./g,'').replace(',','.')) || 0,
         montoNeto: parseFloat((r[iNeto] || '0').replace(/\./g,'').replace(',','.')) || 0,
+        ivaRecuperable: parseFloat((iIva >= 0 ? r[iIva] : '0').replace(/\./g,'').replace(',','.')) || 0,
         monto: parseFloat((iMonto >= 0 ? r[iMonto] : '0').replace(/\./g,'').replace(',','.')) || 0,
         importadoEn: TS()
       });
