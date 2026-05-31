@@ -1033,6 +1033,7 @@
                 <button class="cols-btn active" id="col-btn-3" onclick="setMrgCols(3)">3</button>
                 <button class="cols-btn" id="col-btn-4" onclick="setMrgCols(4)">4</button>
                 <button class="cols-btn" id="col-btn-6" onclick="setMrgCols(6)">6</button>
+                <button class="cols-btn" id="col-btn-list" onclick="setMrgCols('list')" title="Vista lista"><i class="bi bi-list-ul"></i></button>
               </div>
             </div>
             <button class="btn btn-primary" onclick="openRecetaDrawer()">
@@ -1047,6 +1048,26 @@
           </div>
           <div class="recipes-grid cols-3" id="recetas-grid">
             <div style="grid-column:1/-1"><div class="loading-overlay"><div class="spinner spinner-dark"></div></div></div>
+          </div>
+          <div id="recetas-list" style="display:none">
+            <div class="card" style="padding:0">
+              <div class="table-wrap">
+                <table id="recetas-list-table">
+                  <thead>
+                    <tr>
+                      <th>Nombre</th>
+                      <th>Tipo</th>
+                      <th>Subcategoría</th>
+                      <th style="text-align:right">Costo</th>
+                      <th style="text-align:right">Venta</th>
+                      <th style="text-align:right">Margen</th>
+                      <th style="width:70px"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="recetas-list-body"></tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -3079,8 +3100,12 @@ function switchMrgTab(tab) {
 
 function setMrgCols(n) {
   mrgCols = n;
-  [3,4,6].forEach(c => document.getElementById('col-btn-'+c)?.classList.toggle('active', c === n));
-  document.getElementById('recetas-grid').className = `recipes-grid cols-${n}`;
+  const isList = n === 'list';
+  [3,4,6,'list'].forEach(c => document.getElementById('col-btn-'+c)?.classList.toggle('active', c === n));
+  document.getElementById('recetas-grid').style.display = isList ? 'none' : '';
+  document.getElementById('recetas-list').style.display = isList ? '' : 'none';
+  if (!isList) document.getElementById('recetas-grid').className = `recipes-grid cols-${n}`;
+  filterRecetas();
 }
 
 function setPrepCols(n) {
@@ -3214,7 +3239,34 @@ function filterRecetas() {
       (!mrg || (mrg === 'high' && m.margen >= 70) || (mrg === 'mid' && m.margen >= 50 && m.margen < 70) || (mrg === 'low' && m.margen < 50))
     );
   });
-  renderRecetasGrid(list);
+  if (mrgCols === 'list') renderRecetasList(list);
+  else renderRecetasGrid(list);
+}
+
+function renderRecetasList(list) {
+  const catMap = Object.fromEntries((state.categoriasMenu || []).map(c => [c.nombre, c]));
+  const tbody = document.getElementById('recetas-list-body');
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><i class="bi bi-graph-up-arrow"></i><p>No hay recetas.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(m => {
+    const mPct = parseFloat(m.margen) || 0;
+    const catObj = catMap[m.categoriaMenu];
+    const tipo = catObj?.tipo || '';
+    return `<tr>
+      <td><strong>${m.nombre}</strong></td>
+      <td><span style="font-size:0.8rem;color:var(--muted)">${tipo}</span></td>
+      <td>${m.categoriaMenu ? `<span class="recipe-card-tag cat" style="font-size:0.78rem">${m.categoriaMenu}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
+      <td style="text-align:right">$${fmt(m.costoPorcion)}</td>
+      <td style="text-align:right">$${fmt(m.precioVenta)}</td>
+      <td style="text-align:right"><span class="mrg-pill ${mrgPillClass(mPct)}">${fmtPct(mPct)}</span></td>
+      <td style="text-align:right">
+        <button class="btn btn-outline btn-sm btn-icon" onclick="editReceta('${m.id}')"><i class="bi bi-pencil"></i></button>
+        <button class="btn btn-outline btn-sm btn-icon" onclick="deleteReceta('${m.id}','${m.nombre.replace(/'/g,"\\'")}')"><i class="bi bi-x" style="color:var(--danger)"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
 }
 
 function filterPreps() {
