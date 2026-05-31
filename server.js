@@ -671,8 +671,9 @@ app.post('/api/categorias-menu', requireAuth, async (req, res) => {
     const nombre = req.body.nombre?.trim();
     if (!nombre) return res.status(400).json({ error: 'Nombre requerido' });
     const orden = parseInt(req.body.orden) || 0;
-    const ref = await col(req, 'categoriasMenu').add({ nombre, orden, creadoEn: TS() });
-    res.json({ id: ref.id, nombre, orden });
+    const tipo = req.body.tipo || '';
+    const ref = await col(req, 'categoriasMenu').add({ nombre, orden, tipo, creadoEn: TS() });
+    res.json({ id: ref.id, nombre, orden, tipo });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -681,7 +682,8 @@ app.put('/api/categorias-menu/:id', requireAuth, async (req, res) => {
     const nombre = req.body.nombre?.trim();
     if (!nombre) return res.status(400).json({ error: 'Nombre requerido' });
     const orden = parseInt(req.body.orden) || 0;
-    await col(req, 'categoriasMenu').doc(req.params.id).update({ nombre, orden });
+    const tipo = req.body.tipo || '';
+    await col(req, 'categoriasMenu').doc(req.params.id).update({ nombre, orden, tipo });
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });

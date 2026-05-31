@@ -982,12 +982,12 @@
             <i class="bi bi-plus"></i> Nueva sección
           </button>
         </div>
-        <div class="card" style="max-width:520px">
+        <div class="card" style="max-width:700px">
           <div class="card-body" style="padding:0">
             <div class="table-wrap">
               <table>
                 <thead>
-                  <tr><th>Nombre</th><th style="width:70px;text-align:center">Orden</th><th style="width:80px"></th></tr>
+                  <tr><th>Tipo</th><th>Subcategoría</th><th style="width:70px;text-align:center">Orden</th><th style="width:80px"></th></tr>
                 </thead>
                 <tbody id="cat-menu-table-body">
                   <tr><td colspan="3"><div class="loading-overlay"><div class="spinner spinner-dark"></div></div></td></tr>
@@ -1409,8 +1409,17 @@
     <div class="modal-body">
       <input type="hidden" id="cat-menu-id" />
       <div class="form-group">
-        <label class="form-label">Nombre</label>
-        <input type="text" id="cat-menu-nombre" class="form-control" placeholder="Ej: Tapeos/Entrantes, Platos Jeró..." />
+        <label class="form-label">Tipo</label>
+        <select id="cat-menu-tipo" class="form-control">
+          <option value="">— Sin tipo —</option>
+          <option value="Alimentos">Alimentos</option>
+          <option value="Bebestibles">Bebestibles</option>
+          <option value="Desechables">Desechables</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nombre (subcategoría)</label>
+        <input type="text" id="cat-menu-nombre" class="form-control" placeholder="Ej: Tapeos/Entrantes, Vinos..." />
       </div>
       <div class="form-group">
         <label class="form-label">Orden de aparición</label>
@@ -2250,21 +2259,31 @@ function renderCatMenu() {
     tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state"><i class="bi bi-card-list"></i><p>No hay secciones. Creá la primera.</p></div></td></tr>`;
     return;
   }
-  tbody.innerHTML = state.categoriasMenu.map(c => `<tr>
+  const tipoColors = { Alimentos: '#e8f5e9', Bebestibles: '#e3f2fd', Desechables: '#fff3e0' };
+  const tipoText = { Alimentos: '#2e7d32', Bebestibles: '#1565c0', Desechables: '#e65100' };
+  tbody.innerHTML = state.categoriasMenu.map(c => {
+    const tipo = c.tipo || '';
+    const tipoBadge = tipo
+      ? `<span style="background:${tipoColors[tipo]||'#f5f5f5'};color:${tipoText[tipo]||'#333'};padding:2px 8px;border-radius:12px;font-size:0.78rem;font-weight:600">${tipo}</span>`
+      : '<span style="color:var(--muted)">—</span>';
+    return `<tr>
+    <td>${tipoBadge}</td>
     <td><strong>${c.nombre}</strong></td>
     <td style="text-align:center">${c.orden ?? ''}</td>
     <td style="text-align:right">
-      <button class="btn btn-outline btn-sm btn-icon" onclick="openCatMenuModal('${c.id}','${c.nombre.replace(/'/g,"\\'")}',${c.orden ?? 0})"><i class="bi bi-pencil"></i></button>
+      <button class="btn btn-outline btn-sm btn-icon" onclick="openCatMenuModal('${c.id}','${c.nombre.replace(/'/g,"\\'")}',${c.orden ?? 0},'${tipo}')"><i class="bi bi-pencil"></i></button>
       <button class="btn btn-outline btn-sm btn-icon" onclick="deleteCatMenu('${c.id}','${c.nombre.replace(/'/g,"\\'")}')" style="margin-left:4px"><i class="bi bi-trash"></i></button>
     </td>
-  </tr>`).join('');
+  </tr>`;
+  }).join('');
 }
 
-function openCatMenuModal(id, nombre, orden) {
+function openCatMenuModal(id, nombre, orden, tipo) {
   document.getElementById('modal-cat-menu-title').textContent = id ? 'Editar sección' : 'Nueva sección';
   document.getElementById('cat-menu-id').value = id || '';
   document.getElementById('cat-menu-nombre').value = nombre || '';
   document.getElementById('cat-menu-orden').value = orden ?? '';
+  document.getElementById('cat-menu-tipo').value = tipo || '';
   openModal('modal-cat-menu');
   setTimeout(() => document.getElementById('cat-menu-nombre').focus(), 100);
 }
@@ -2274,12 +2293,13 @@ async function saveCatMenu() {
   if (!nombre) { toast('El nombre es requerido', 'error'); return; }
   const id = document.getElementById('cat-menu-id').value;
   const orden = parseInt(document.getElementById('cat-menu-orden').value) || 0;
+  const tipo = document.getElementById('cat-menu-tipo').value;
   try {
     if (id) {
-      await api('PUT', '/categorias-menu/' + id, { nombre, orden });
+      await api('PUT', '/categorias-menu/' + id, { nombre, orden, tipo });
       toast('Sección actualizada');
     } else {
-      await api('POST', '/categorias-menu', { nombre, orden });
+      await api('POST', '/categorias-menu', { nombre, orden, tipo });
       toast('Sección creada');
     }
     closeModal('modal-cat-menu');
