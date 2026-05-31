@@ -1296,6 +1296,15 @@
             <i class="bi bi-arrow-repeat"></i> Sincronizar compras
           </button>
         </div>
+        <div class="card" style="margin-bottom:16px;padding:16px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <label style="font-weight:600;white-space:nowrap;font-size:0.9rem">Link Google Sheets</label>
+            <input type="url" id="eerr-planilla-url" class="form-control" placeholder="https://docs.google.com/spreadsheets/d/..." style="flex:1">
+            <button class="btn btn-outline-secondary" onclick="saveEerrUrl()" style="white-space:nowrap">
+              <i class="bi bi-floppy"></i> Guardar link
+            </button>
+          </div>
+        </div>
         <div id="eerr-sync-info" style="margin-bottom:16px;font-size:0.85rem;color:var(--muted)"></div>
         <div id="eerr-content">
           <div class="empty-state"><i class="bi bi-bar-chart-line"></i><p>Sincroniza la planilla para ver el EERR.</p></div>
@@ -3713,6 +3722,10 @@ async function loadEERR() {
       api('GET', '/compras/periodos'),
       api('GET', '/info')
     ]);
+    // Load saved URL into input
+    const urlInput = document.getElementById('eerr-planilla-url');
+    if (urlInput && info.planillaComprasUrl) urlInput.value = info.planillaComprasUrl;
+
     const lastSync = info.ultimaSincronizacion
       ? new Date(info.ultimaSincronizacion._seconds * 1000).toLocaleString('es-CL')
       : null;
@@ -3724,6 +3737,16 @@ async function loadEERR() {
     }
     if (!periodos.length) return;
     renderEERR(periodos);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function saveEerrUrl() {
+  const url = document.getElementById('eerr-planilla-url').value.trim();
+  if (!url) { toast('Ingresa un link de Google Sheets', 'error'); return; }
+  try {
+    const info = await api('GET', '/info');
+    await api('PUT', '/info', { ...info, planillaComprasUrl: url });
+    toast('Link guardado');
   } catch (e) { toast(e.message, 'error'); }
 }
 
