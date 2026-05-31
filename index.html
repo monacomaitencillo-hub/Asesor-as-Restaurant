@@ -3128,11 +3128,11 @@ async function loadMargenes() {
     state.preparaciones = preps;
     state.margenes = recetas;
     state.categoriasMenu = catMenu;
-    renderRecetasGrid();
     renderPrepsGrid();
     renderMrgStats();
     // Populate category filters
     populateMrgCatFilter();
+    filterRecetas();
   } catch (e) { toast(e.message, 'error'); }
 }
 
