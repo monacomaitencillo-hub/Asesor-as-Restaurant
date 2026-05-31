@@ -695,6 +695,148 @@ app.delete('/api/categorias-menu/:id', requireAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ─── COMPRAS / EERR ───────────────────────────────────────────────────────────
+function sheetUrlToCsvUrl(url) {
+  const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+  if (!match) throw new Error('URL de Google Sheets inválida');
+  const id = match[1];
+  const gidMatch = url.match(/[#&?]gid=(\d+)/);
+  const gid = gidMatch ? gidMatch[1] : '0';
+  return `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`;
+}
+
+function parseCsv(text) {
+  const rows = [];
+  const lines = text.split('\n');
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    const cols = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { inQ = !inQ; continue; }
+      if (ch === ',' && !inQ) { cols.push(cur.trim()); cur = ''; continue; }
+      cur += ch;
+    }
+    cols.push(cur.trim());
+    rows.push(cols);
+  }
+  return rows;
+}
+
+function parseChileDate(str) {
+  if (!str) return null;
+  // formats: DD/MM/YYYY or DD/MM/YYYY HH:MM:SS
+  const m = str.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (!m) return null;
+  return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+}
+
+app.post('/api/sync/compras', requireAuth, async (req, res) => {
+  try {
+    const infoDoc = await db.collection('clientes').doc(req.clienteId).collection('info').doc('restaurante').get();
+    const planillaUrl = infoDoc.data()?.planillaComprasUrl;
+    if (!planillaUrl) return res.status(400).json({ error: 'No hay link de planilla configurado en Info Restaurante' });
+
+    const csvUrl = sheetUrlToCsvUrl(planillaUrl);
+    const resp = await fetch(csvUrl);
+    if (!resp.ok) throw new Error('No se pudo leer la planilla. Verifica que sea pública.');
+    const text = await resp.text();
+
+    const rows = parseCsv(text);
+    if (rows.length < 2) return res.status(400).json({ error: 'Planilla vacía o sin datos' });
+
+    // Map headers
+    const headers = rows[0].map(h => h.toLowerCase().replace(/[^a-záéíóúñ0-9]/gi, ''));
+    const idx = name => headers.findIndex(h => h.includes(name));
+    const iNro = idx('nro');
+    const iTipoDoc = idx('tipodoc');
+    const iTipoCompra = idx('tipocompra');
+    const iRut = idx('rut');
+    const iRazon = idx('razon');
+    const iFolio = idx('folio');
+    const iTipoGasto = idx('tipogasto') !== -1 ? idx('tipogasto') : idx('gasto');
+    const iFecha = idx('fechadocto') !== -1 ? idx('fechadocto') : idx('fecha');
+    const iExento = idx('exento');
+    const iNeto = idx('neto');
+    const iMonto = headers.findIndex((h, i) => h.includes('monto') && i !== iExento && i !== iNeto);
+
+    // Parse data rows
+    const dataRows = rows.slice(1).filter(r => r.some(c => c));
+    const periodos = new Set();
+    const parsed = [];
+
+    for (const r of dataRows) {
+      const fechaStr = r[iFecha] || '';
+      const fechaIso = parseChileDate(fechaStr);
+      if (!fechaIso) continue;
+      const periodo = fechaIso.substring(0, 7); // YYYY-MM
+      periodos.add(periodo);
+      parsed.push({
+        nro: r[iNro] || '',
+        tipoDoc: r[iTipoDoc] || '',
+        tipoCompra: r[iTipoCompra] || '',
+        rutProveedor: r[iRut] || '',
+        razonSocial: r[iRazon] || '',
+        folio: r[iFolio] || '',
+        tipoGasto: r[iTipoGasto] || '',
+        fechaDocto: fechaIso,
+        periodo,
+        montoExento: parseFloat((r[iExento] || '0').replace(/\./g,'').replace(',','.')) || 0,
+        montoNeto: parseFloat((r[iNeto] || '0').replace(/\./g,'').replace(',','.')) || 0,
+        monto: parseFloat((iMonto >= 0 ? r[iMonto] : '0').replace(/\./g,'').replace(',','.')) || 0,
+        importadoEn: TS()
+      });
+    }
+
+    // Delete existing docs for detected periods
+    const comprasCol = col(req, 'compras');
+    const periodsArr = [...periodos];
+    for (const p of periodsArr) {
+      const existing = await comprasCol.where('periodo', '==', p).get();
+      const delBatch = db.batch();
+      existing.docs.forEach(d => delBatch.delete(d.ref));
+      if (!existing.empty) await delBatch.commit();
+    }
+
+    // Insert new docs in batches of 400
+    const chunkSize = 400;
+    for (let i = 0; i < parsed.length; i += chunkSize) {
+      const batch = db.batch();
+      parsed.slice(i, i + chunkSize).forEach(row => {
+        batch.set(comprasCol.doc(), row);
+      });
+      await batch.commit();
+    }
+
+    // Save last sync info
+    await db.collection('clientes').doc(req.clienteId).collection('info').doc('restaurante').set({
+      ultimaSincronizacion: TS(),
+      ultimosSincronizados: periodsArr
+    }, { merge: true });
+
+    res.json({ ok: true, periodos: periodsArr, total: parsed.length });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/compras', requireAuth, async (req, res) => {
+  try {
+    const { periodo } = req.query;
+    let q = col(req, 'compras');
+    if (periodo) q = q.where('periodo', '==', periodo);
+    const snap = await q.get();
+    res.json(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/compras/periodos', requireAuth, async (req, res) => {
+  try {
+    const snap = await col(req, 'compras').select('periodo').get();
+    const periodos = [...new Set(snap.docs.map(d => d.data().periodo))].sort().reverse();
+    res.json(periodos);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── ALERTAS ──────────────────────────────────────────────────────────────────
 app.get('/api/alertas', requireAuth, async (req, res) => {
   try {
@@ -748,6 +890,7 @@ app.put('/api/info', requireAuth, async (req, res) => {
       sitioWeb: req.body.sitioWeb || '',
       horario: req.body.horario || '',
       concepto: req.body.concepto || '',
+      planillaComprasUrl: req.body.planillaComprasUrl || '',
       actualizadoEn: TS()
     };
     await db.collection('clientes').doc(req.clienteId).collection('info').doc('restaurante').set(data, { merge: true });

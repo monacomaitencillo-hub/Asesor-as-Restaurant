@@ -588,6 +588,9 @@
       <div class="nav-item" data-section="gastos">
         <i class="bi bi-cash-stack"></i> Gastos Fijos
       </div>
+      <div class="nav-item" data-section="eerr">
+        <i class="bi bi-bar-chart-line"></i> EERR
+      </div>
 
       <div class="nav-section-label">Asesoría</div>
       <div class="nav-item" data-section="reuniones">
@@ -1285,6 +1288,20 @@
         </div>
       </div>
 
+      <!-- ════════ EERR ════════ -->
+      <div class="section" id="s-eerr">
+        <div class="section-header">
+          <h2>Estado de Resultados</h2>
+          <button class="btn btn-primary" id="btn-sync-compras" onclick="syncCompras()">
+            <i class="bi bi-arrow-repeat"></i> Sincronizar compras
+          </button>
+        </div>
+        <div id="eerr-sync-info" style="margin-bottom:16px;font-size:0.85rem;color:var(--muted)"></div>
+        <div id="eerr-content">
+          <div class="empty-state"><i class="bi bi-bar-chart-line"></i><p>Sincroniza la planilla para ver el EERR.</p></div>
+        </div>
+      </div>
+
       <!-- ════════ INFO RESTAURANTE ════════ -->
       <div class="section" id="s-info">
         <div class="section-header">
@@ -1313,9 +1330,14 @@
                 <label class="form-label">Dirección</label>
                 <input type="text" id="info-direccion" class="form-control" placeholder="Ej: Av. Providencia 1234, Santiago" />
               </div>
-              <div class="form-group" style="margin:0">
+              <div class="form-group">
                 <label class="form-label">Concepto / Descripción</label>
                 <textarea id="info-concepto" class="form-control" rows="3" placeholder="Ej: Restaurante de cocina chilena tradicional con 20 años de trayectoria..."></textarea>
+              </div>
+              <div class="form-group" style="margin:0">
+                <label class="form-label"><i class="bi bi-table"></i> Link Planilla de Compras (Google Sheets)</label>
+                <input type="url" id="info-planilla-compras" class="form-control" placeholder="https://docs.google.com/spreadsheets/d/..." />
+                <p style="font-size:0.78rem;color:var(--muted);margin-top:4px">La planilla debe estar compartida como "Cualquier persona con el link puede ver"</p>
               </div>
             </div>
           </div>
@@ -2039,6 +2061,7 @@ const sectionTitles = {
   margenes: 'Márgenes',
   catMenu: 'Categorías de Carta',
   gastos: 'Gastos Fijos',
+  eerr: 'Estado de Resultados',
   reuniones: 'Reuniones de Asesoría',
   areas: 'Áreas de Inventario',
   usuarios: 'Usuarios',
@@ -2063,6 +2086,7 @@ function navigate(section) {
   if (section === 'margenes') loadMargenes();
   if (section === 'catMenu') loadCatMenu();
   if (section === 'gastos') loadGastos();
+  if (section === 'eerr') loadEERR();
   if (section === 'reuniones') loadReuniones();
   if (section === 'areas') loadAreas();
   if (section === 'usuarios') loadUsuarios();
@@ -3658,6 +3682,7 @@ async function loadInfo() {
     document.getElementById('info-instagram').value = data.instagram || '';
     document.getElementById('info-facebook').value = data.facebook || '';
     document.getElementById('info-sitioweb').value = data.sitioWeb || '';
+    document.getElementById('info-planilla-compras').value = data.planillaComprasUrl || '';
   } catch (e) { toast(e.message, 'error'); }
 }
 
@@ -3674,10 +3699,115 @@ async function saveInfo() {
       horario: document.getElementById('info-horario').value.trim(),
       instagram: document.getElementById('info-instagram').value.trim(),
       facebook: document.getElementById('info-facebook').value.trim(),
-      sitioWeb: document.getElementById('info-sitioweb').value.trim()
+      sitioWeb: document.getElementById('info-sitioweb').value.trim(),
+      planillaComprasUrl: document.getElementById('info-planilla-compras').value.trim()
     });
     toast('Información guardada');
   } catch (e) { toast(e.message, 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════ EERR ════════════
+async function loadEERR() {
+  try {
+    const [periodos, info] = await Promise.all([
+      api('GET', '/compras/periodos'),
+      api('GET', '/info')
+    ]);
+    const lastSync = info.ultimaSincronizacion
+      ? new Date(info.ultimaSincronizacion._seconds * 1000).toLocaleString('es-CL')
+      : null;
+    const syncInfo = document.getElementById('eerr-sync-info');
+    if (lastSync) {
+      syncInfo.innerHTML = `Última sincronización: <strong>${lastSync}</strong> · Períodos: ${(info.ultimosSincronizados||[]).join(', ')}`;
+    } else {
+      syncInfo.innerHTML = 'Sin sincronizar aún.';
+    }
+    if (!periodos.length) return;
+    renderEERR(periodos);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function syncCompras() {
+  const btn = document.getElementById('btn-sync-compras');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner spinner-dark" style="width:16px;height:16px;border-width:2px;display:inline-block;margin-right:6px"></span> Sincronizando...';
+  try {
+    const res = await api('POST', '/sync/compras');
+    toast(`✓ ${res.total} filas importadas · ${res.periodos.join(', ')}`);
+    await loadEERR();
+  } catch (e) { toast(e.message, 'error'); }
+  finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Sincronizar compras';
+  }
+}
+
+async function renderEERR(periodos) {
+  const content = document.getElementById('eerr-content');
+  content.innerHTML = '<div class="loading-overlay"><div class="spinner spinner-dark"></div></div>';
+  try {
+    // Fetch all compras for all periodos
+    const allCompras = [];
+    for (const p of periodos) {
+      const rows = await api('GET', `/compras?periodo=${p}`);
+      allCompras.push(...rows);
+    }
+
+    // Get unique tipos de gasto
+    const tipos = [...new Set(allCompras.map(r => r.tipoGasto || 'Sin clasificar'))].sort();
+    const periodosSorted = [...periodos].sort();
+
+    // Build pivot: tipo → periodo → sum montoNeto
+    const pivot = {};
+    for (const tipo of tipos) {
+      pivot[tipo] = {};
+      for (const p of periodosSorted) pivot[tipo][p] = 0;
+    }
+    for (const r of allCompras) {
+      const tipo = r.tipoGasto || 'Sin clasificar';
+      const p = r.periodo;
+      if (pivot[tipo] && p) pivot[tipo][p] = (pivot[tipo][p] || 0) + (r.montoNeto || 0);
+    }
+
+    // Build totals per period
+    const totales = {};
+    for (const p of periodosSorted) {
+      totales[p] = tipos.reduce((s, t) => s + (pivot[t][p] || 0), 0);
+    }
+
+    const fmtM = n => n ? '$' + Math.round(n).toLocaleString('es-CL') : '$0';
+    const fmtPeriodo = p => { const [y,m] = p.split('-'); const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']; return `${meses[parseInt(m)-1]} ${y}`; };
+
+    content.innerHTML = `
+      <div class="card" style="padding:0;overflow:auto">
+        <table style="border-collapse:collapse;width:100%;min-width:600px">
+          <thead>
+            <tr style="background:var(--sidebar)">
+              <th style="padding:10px 16px;text-align:left;color:#fff;font-weight:600;white-space:nowrap">Tipo de Gasto</th>
+              ${periodosSorted.map(p => `<th style="padding:10px 14px;text-align:right;color:#fff;font-weight:600;white-space:nowrap">${fmtPeriodo(p)}</th>`).join('')}
+              <th style="padding:10px 14px;text-align:right;color:#fff;font-weight:600">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tipos.map((tipo, i) => {
+              const totalTipo = periodosSorted.reduce((s, p) => s + (pivot[tipo][p] || 0), 0);
+              return `<tr style="background:${i%2===0?'var(--bg)':'#fff'}">
+                <td style="padding:10px 16px;font-weight:500">${tipo}</td>
+                ${periodosSorted.map(p => `<td style="padding:10px 14px;text-align:right">${fmtM(pivot[tipo][p])}</td>`).join('')}
+                <td style="padding:10px 14px;text-align:right;font-weight:600">${fmtM(totalTipo)}</td>
+              </tr>`;
+            }).join('')}
+            <tr style="background:#f0f4ff;border-top:2px solid var(--primary)">
+              <td style="padding:12px 16px;font-weight:700">TOTAL COSTOS</td>
+              ${periodosSorted.map(p => `<td style="padding:12px 14px;text-align:right;font-weight:700">${fmtM(totales[p])}</td>`).join('')}
+              <td style="padding:12px 14px;text-align:right;font-weight:700">${fmtM(Object.values(totales).reduce((a,b)=>a+b,0))}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>`;
+  } catch (e) {
+    content.innerHTML = `<div class="empty-state"><p>Error: ${e.message}</p></div>`;
+  }
 }
 
 // ═══════════════════════════════════════════════════════ GASTOS FIJOS ════
