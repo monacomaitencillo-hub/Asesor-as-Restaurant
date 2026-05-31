@@ -3812,6 +3812,8 @@ function renderEerrTable(rows) {
   const content = document.getElementById('eerr-content');
   const fmtM = n => n ? '$' + Math.round(n).toLocaleString('es-CL') : '-';
   const fmtP = p => { const [y,m] = p.split('-'); return `${['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][parseInt(m)-1]} ${y}`; };
+  const thS = (extra='') => `padding:8px 14px;color:#fff;font-weight:600;background:#16213e;position:sticky;top:0;z-index:2;${extra}`;
+  const thL = (extra='') => `padding:6px 14px;color:#aab4c8;font-weight:500;font-size:0.78rem;background:#16213e;position:sticky;top:36px;z-index:2;${extra}`;
 
   if (!rows.length) {
     content.innerHTML = '<div class="empty-state"><i class="bi bi-bar-chart-line"></i><p>Sin datos para este período.</p></div>';
@@ -3821,78 +3823,116 @@ function renderEerrTable(rows) {
   const periodoActivo = document.getElementById('eerr-filter-periodo').value;
   const tipos = [...new Set(rows.map(r => r.tipoGasto || 'Sin clasificar'))].sort();
 
-  if (periodoActivo) {
-    // Vista de un solo mes: Tipo de Gasto | Monto Neto | IVA Recuperable
-    const byTipo = {};
-    for (const r of rows) {
-      const t = r.tipoGasto || 'Sin clasificar';
-      if (!byTipo[t]) byTipo[t] = { neto: 0, iva: 0 };
-      byTipo[t].neto += r.montoNeto || 0;
-      byTipo[t].iva  += r.ivaRecuperable || 0;
-    }
-    const totalNeto = Object.values(byTipo).reduce((s, v) => s + v.neto, 0);
-    const totalIva  = Object.values(byTipo).reduce((s, v) => s + v.iva, 0);
-    content.innerHTML = `
-      <div class="card" style="padding:0;overflow:auto;max-height:70vh">
-        <table style="border-collapse:collapse;width:100%;min-width:400px">
-          <thead>
-            <tr>
-              <th style="padding:10px 16px;text-align:left;color:#fff;font-weight:600;background:#16213e;position:sticky;top:0;z-index:2">Tipo de Gasto</th>
-              <th style="padding:10px 14px;text-align:right;color:#fff;font-weight:600;background:#16213e;position:sticky;top:0;z-index:2">Monto Neto</th>
-              <th style="padding:10px 14px;text-align:right;color:#fff;font-weight:600;background:#16213e;position:sticky;top:0;z-index:2">IVA Recuperable</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${tipos.map((t, i) => `
-              <tr style="background:${i%2===0?'var(--bg)':'#fff'}">
-                <td style="padding:10px 16px">${t}</td>
-                <td style="padding:10px 14px;text-align:right">${fmtM(byTipo[t]?.neto)}</td>
-                <td style="padding:10px 14px;text-align:right">${fmtM(byTipo[t]?.iva)}</td>
-              </tr>`).join('')}
-            <tr style="background:#f0f4ff;border-top:2px solid var(--primary)">
-              <td style="padding:11px 16px;font-weight:700">TOTAL</td>
-              <td style="padding:11px 14px;text-align:right;font-weight:700">${fmtM(totalNeto)}</td>
-              <td style="padding:11px 14px;text-align:right;font-weight:700">${fmtM(totalIva)}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>`;
-  } else {
-    // Vista todos los períodos: pivot Tipo × Mes (Monto Neto)
-    const periodos = [...new Set(rows.map(r => r.periodo))].sort();
-    const pivot = {};
-    for (const t of tipos) { pivot[t] = {}; for (const p of periodos) pivot[t][p] = 0; }
-    for (const r of rows) {
-      const t = r.tipoGasto || 'Sin clasificar';
-      pivot[t][r.periodo] = (pivot[t][r.periodo] || 0) + (r.montoNeto || 0);
-    }
-    const totalesCol = {};
-    for (const p of periodos) totalesCol[p] = tipos.reduce((s, t) => s + (pivot[t][p] || 0), 0);
+  // Aggregate by tipo
+  const byTipo = {};
+  for (const r of rows) {
+    const t = r.tipoGasto || 'Sin clasificar';
+    if (!byTipo[t]) byTipo[t] = { neto: 0, iva: 0 };
+    byTipo[t].neto += r.montoNeto || 0;
+    byTipo[t].iva  += r.ivaRecuperable || 0;
+  }
 
+  if (periodoActivo) {
+    // Vista un mes: Tipo | Neto | IVA Recup. | Total (neto+iva)
+    const totalNeto = tipos.reduce((s, t) => s + (byTipo[t]?.neto || 0), 0);
+    const totalIva  = tipos.reduce((s, t) => s + (byTipo[t]?.iva  || 0), 0);
     content.innerHTML = `
-      <div class="card" style="padding:0;overflow:auto;max-height:70vh">
-        <table style="border-collapse:collapse;width:100%;min-width:600px">
+      <div class="card" style="padding:0;overflow:auto;max-height:72vh">
+        <table style="border-collapse:collapse;width:100%;min-width:460px">
           <thead>
             <tr>
-              <th style="padding:10px 16px;text-align:left;color:#fff;font-weight:600;background:#16213e;position:sticky;top:0;left:0;z-index:3;white-space:nowrap">Tipo de Gasto</th>
-              ${periodos.map(p => `<th style="padding:10px 14px;text-align:right;color:#fff;font-weight:600;white-space:nowrap;background:#16213e;position:sticky;top:0;z-index:2">${fmtP(p)}</th>`).join('')}
-              <th style="padding:10px 14px;text-align:right;color:#fff;font-weight:600;background:#16213e;position:sticky;top:0;z-index:2">Total</th>
+              <th style="${thS('text-align:left;position:sticky;left:0;z-index:3')}">Tipo de Gasto</th>
+              <th style="${thS('text-align:right')}">Neto</th>
+              <th style="${thS('text-align:right')}">IVA Recuperable</th>
+              <th style="${thS('text-align:right')}">Total (Neto + IVA)</th>
+            </tr>
+            <tr>
+              <td style="${thL('text-align:left;position:sticky;left:0;z-index:3')}">Categoría del gasto</td>
+              <td style="${thL('text-align:right')}">Monto sin IVA</td>
+              <td style="${thL('text-align:right')}">IVA 19% a recuperar</td>
+              <td style="${thL('text-align:right')}">Neto + IVA recuperable</td>
             </tr>
           </thead>
           <tbody>
             ${tipos.map((t, i) => {
               const bg = i%2===0 ? '#f8f9fa' : '#fff';
-              const totalFila = periodos.reduce((s, p) => s + (pivot[t][p] || 0), 0);
+              const neto = byTipo[t]?.neto || 0;
+              const iva  = byTipo[t]?.iva  || 0;
               return `<tr style="background:${bg}">
                 <td style="padding:10px 16px;font-weight:500;position:sticky;left:0;background:${bg};z-index:1;white-space:nowrap">${t}</td>
-                ${periodos.map(p => `<td style="padding:10px 14px;text-align:right">${fmtM(pivot[t][p])}</td>`).join('')}
-                <td style="padding:10px 14px;text-align:right;font-weight:600">${fmtM(totalFila)}</td>
+                <td style="padding:10px 14px;text-align:right">${fmtM(neto)}</td>
+                <td style="padding:10px 14px;text-align:right;color:#1a7a4a">${fmtM(iva)}</td>
+                <td style="padding:10px 14px;text-align:right;font-weight:500">${fmtM(neto + iva)}</td>
               </tr>`;
             }).join('')}
             <tr style="background:#f0f4ff;border-top:2px solid var(--primary)">
               <td style="padding:11px 16px;font-weight:700;position:sticky;left:0;background:#f0f4ff;z-index:1">TOTAL</td>
-              ${periodos.map(p => `<td style="padding:11px 14px;text-align:right;font-weight:700">${fmtM(totalesCol[p])}</td>`).join('')}
-              <td style="padding:11px 14px;text-align:right;font-weight:700">${fmtM(Object.values(totalesCol).reduce((a,b)=>a+b,0))}</td>
+              <td style="padding:11px 14px;text-align:right;font-weight:700">${fmtM(totalNeto)}</td>
+              <td style="padding:11px 14px;text-align:right;font-weight:700;color:#1a7a4a">${fmtM(totalIva)}</td>
+              <td style="padding:11px 14px;text-align:right;font-weight:700">${fmtM(totalNeto + totalIva)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>`;
+  } else {
+    // Vista todos los períodos: pivot Tipo × Mes, columnas Neto + IVA por mes
+    const periodos = [...new Set(rows.map(r => r.periodo))].sort();
+    const pivotNeto = {}, pivotIva = {};
+    for (const t of tipos) {
+      pivotNeto[t] = {}; pivotIva[t] = {};
+      for (const p of periodos) { pivotNeto[t][p] = 0; pivotIva[t][p] = 0; }
+    }
+    for (const r of rows) {
+      const t = r.tipoGasto || 'Sin clasificar';
+      pivotNeto[t][r.periodo] = (pivotNeto[t][r.periodo] || 0) + (r.montoNeto || 0);
+      pivotIva[t][r.periodo]  = (pivotIva[t][r.periodo]  || 0) + (r.ivaRecuperable || 0);
+    }
+    const totNeto = {}, totIva = {};
+    for (const p of periodos) {
+      totNeto[p] = tipos.reduce((s, t) => s + (pivotNeto[t][p] || 0), 0);
+      totIva[p]  = tipos.reduce((s, t) => s + (pivotIva[t][p]  || 0), 0);
+    }
+    const grandNeto = Object.values(totNeto).reduce((a,b)=>a+b,0);
+    const grandIva  = Object.values(totIva).reduce((a,b)=>a+b,0);
+
+    content.innerHTML = `
+      <div class="card" style="padding:0;overflow:auto;max-height:72vh">
+        <table style="border-collapse:collapse;min-width:600px">
+          <thead>
+            <tr>
+              <th style="${thS('text-align:left;position:sticky;left:0;z-index:3')}" rowspan="2">Tipo de Gasto</th>
+              ${periodos.map(p => `<th style="${thS('text-align:center;border-left:1px solid #2a3a5e')}" colspan="2">${fmtP(p)}</th>`).join('')}
+              <th style="${thS('text-align:center;border-left:1px solid #2a3a5e')}" colspan="2">Total</th>
+            </tr>
+            <tr>
+              ${periodos.map(() => `
+                <th style="${thL('text-align:right;border-left:1px solid #2a3a5e')}">Neto</th>
+                <th style="${thL('text-align:right')}">IVA Recup.</th>`).join('')}
+              <th style="${thL('text-align:right;border-left:1px solid #2a3a5e')}">Neto</th>
+              <th style="${thL('text-align:right')}">IVA Recup.</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tipos.map((t, i) => {
+              const bg = i%2===0 ? '#f8f9fa' : '#fff';
+              const tNeto = periodos.reduce((s, p) => s + (pivotNeto[t][p] || 0), 0);
+              const tIva  = periodos.reduce((s, p) => s + (pivotIva[t][p]  || 0), 0);
+              return `<tr style="background:${bg}">
+                <td style="padding:10px 16px;font-weight:500;position:sticky;left:0;background:${bg};z-index:1;white-space:nowrap">${t}</td>
+                ${periodos.map(p => `
+                  <td style="padding:10px 12px;text-align:right;border-left:1px solid #e9ecef">${fmtM(pivotNeto[t][p])}</td>
+                  <td style="padding:10px 12px;text-align:right;color:#1a7a4a">${fmtM(pivotIva[t][p])}</td>`).join('')}
+                <td style="padding:10px 12px;text-align:right;font-weight:600;border-left:1px solid #e9ecef">${fmtM(tNeto)}</td>
+                <td style="padding:10px 12px;text-align:right;font-weight:600;color:#1a7a4a">${fmtM(tIva)}</td>
+              </tr>`;
+            }).join('')}
+            <tr style="background:#f0f4ff;border-top:2px solid var(--primary)">
+              <td style="padding:11px 16px;font-weight:700;position:sticky;left:0;background:#f0f4ff;z-index:1">TOTAL</td>
+              ${periodos.map(p => `
+                <td style="padding:11px 12px;text-align:right;font-weight:700;border-left:1px solid #e9ecef">${fmtM(totNeto[p])}</td>
+                <td style="padding:11px 12px;text-align:right;font-weight:700;color:#1a7a4a">${fmtM(totIva[p])}</td>`).join('')}
+              <td style="padding:11px 12px;text-align:right;font-weight:700;border-left:1px solid #e9ecef">${fmtM(grandNeto)}</td>
+              <td style="padding:11px 12px;text-align:right;font-weight:700;color:#1a7a4a">${fmtM(grandIva)}</td>
             </tr>
           </tbody>
         </table>
