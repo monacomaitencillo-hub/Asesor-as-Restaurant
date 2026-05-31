@@ -3833,13 +3833,13 @@ function renderEerrTable(rows) {
     const totalNeto = Object.values(byTipo).reduce((s, v) => s + v.neto, 0);
     const totalIva  = Object.values(byTipo).reduce((s, v) => s + v.iva, 0);
     content.innerHTML = `
-      <div class="card" style="padding:0;overflow:auto">
+      <div class="card" style="padding:0;overflow:auto;max-height:70vh">
         <table style="border-collapse:collapse;width:100%;min-width:400px">
           <thead>
-            <tr style="background:var(--sidebar)">
-              <th style="padding:10px 16px;text-align:left;color:#fff;font-weight:600">Tipo de Gasto</th>
-              <th style="padding:10px 14px;text-align:right;color:#fff;font-weight:600">Monto Neto</th>
-              <th style="padding:10px 14px;text-align:right;color:#fff;font-weight:600">IVA Recuperable</th>
+            <tr>
+              <th style="padding:10px 16px;text-align:left;color:#fff;font-weight:600;background:var(--sidebar);position:sticky;top:0;z-index:2">Tipo de Gasto</th>
+              <th style="padding:10px 14px;text-align:right;color:#fff;font-weight:600;background:var(--sidebar);position:sticky;top:0;z-index:2">Monto Neto</th>
+              <th style="padding:10px 14px;text-align:right;color:#fff;font-weight:600;background:var(--sidebar);position:sticky;top:0;z-index:2">IVA Recuperable</th>
             </tr>
           </thead>
           <tbody>
@@ -3870,13 +3870,13 @@ function renderEerrTable(rows) {
     for (const p of periodos) totalesCol[p] = tipos.reduce((s, t) => s + (pivot[t][p] || 0), 0);
 
     content.innerHTML = `
-      <div class="card" style="padding:0;overflow:auto">
+      <div class="card" style="padding:0;overflow:auto;max-height:70vh">
         <table style="border-collapse:collapse;width:100%;min-width:600px">
           <thead>
-            <tr style="background:var(--sidebar)">
-              <th style="padding:10px 16px;text-align:left;color:#fff;font-weight:600">Tipo de Gasto</th>
-              ${periodos.map(p => `<th style="padding:10px 14px;text-align:right;color:#fff;font-weight:600;white-space:nowrap">${fmtP(p)}</th>`).join('')}
-              <th style="padding:10px 14px;text-align:right;color:#fff;font-weight:600">Total</th>
+            <tr>
+              <th style="padding:10px 16px;text-align:left;color:#fff;font-weight:600;background:var(--sidebar);position:sticky;top:0;z-index:2">Tipo de Gasto</th>
+              ${periodos.map(p => `<th style="padding:10px 14px;text-align:right;color:#fff;font-weight:600;white-space:nowrap;background:var(--sidebar);position:sticky;top:0;z-index:2">${fmtP(p)}</th>`).join('')}
+              <th style="padding:10px 14px;text-align:right;color:#fff;font-weight:600;background:var(--sidebar);position:sticky;top:0;z-index:2">Total</th>
             </tr>
           </thead>
           <tbody>
