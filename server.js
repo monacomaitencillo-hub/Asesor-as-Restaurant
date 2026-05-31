@@ -899,6 +899,8 @@ app.put('/api/info', requireAuth, async (req, res) => {
       horario: req.body.horario || '',
       concepto: req.body.concepto || '',
       planillaComprasUrl: req.body.planillaComprasUrl || '',
+      margenOperacional: parseFloat(req.body.margenOperacional) || 0,
+      diasApertura: Array.isArray(req.body.diasApertura) ? req.body.diasApertura : [],
       actualizadoEn: TS()
     };
     await db.collection('clientes').doc(req.clienteId).collection('info').doc('restaurante').set(data, { merge: true });

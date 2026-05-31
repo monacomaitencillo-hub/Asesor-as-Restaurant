@@ -1322,6 +1322,38 @@
             </div>
           </div>
 
+          <!-- Configuración financiera -->
+          <div class="card" style="grid-column:1/-1">
+            <div class="card-body">
+              <h5 style="font-weight:800;margin-bottom:16px;font-size:0.95rem;display:flex;align-items:center;gap:8px">
+                <i class="bi bi-bar-chart-line" style="color:var(--primary)"></i> Configuración Financiera
+              </h5>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;align-items:start">
+                <div class="form-group" style="margin:0">
+                  <label class="form-label">% Margen operacional</label>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <input type="number" id="info-margen" class="form-control" min="0" max="100" step="0.1" placeholder="Ej: 65" style="width:120px" />
+                    <span style="color:var(--muted);font-size:0.9rem">%</span>
+                  </div>
+                  <p style="font-size:0.78rem;color:var(--muted);margin-top:4px">Ventas Netas × margen% = margen disponible para cubrir gastos</p>
+                </div>
+                <div class="form-group" style="margin:0">
+                  <label class="form-label">Días de apertura</label>
+                  <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:8px">
+                    <label style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:0.8rem;color:var(--text);cursor:pointer"><input type="checkbox" id="info-dia-0" style="width:16px;height:16px"> Dom</label>
+                    <label style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:0.8rem;color:var(--text);cursor:pointer"><input type="checkbox" id="info-dia-1" style="width:16px;height:16px"> Lun</label>
+                    <label style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:0.8rem;color:var(--text);cursor:pointer"><input type="checkbox" id="info-dia-2" style="width:16px;height:16px"> Mar</label>
+                    <label style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:0.8rem;color:var(--text);cursor:pointer"><input type="checkbox" id="info-dia-3" style="width:16px;height:16px"> Mié</label>
+                    <label style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:0.8rem;color:var(--text);cursor:pointer"><input type="checkbox" id="info-dia-4" style="width:16px;height:16px"> Jue</label>
+                    <label style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:0.8rem;color:var(--text);cursor:pointer"><input type="checkbox" id="info-dia-5" style="width:16px;height:16px"> Vie</label>
+                    <label style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:0.8rem;color:var(--text);cursor:pointer"><input type="checkbox" id="info-dia-6" style="width:16px;height:16px"> Sáb</label>
+                  </div>
+                  <p style="font-size:0.78rem;color:var(--muted);margin-top:6px">Para calcular días disponibles por mes y venta diaria necesaria</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Contacto -->
           <div class="card">
             <div class="card-body">
@@ -3666,6 +3698,9 @@ async function loadInfo() {
     document.getElementById('info-facebook').value = data.facebook || '';
     document.getElementById('info-sitioweb').value = data.sitioWeb || '';
     document.getElementById('info-planilla-compras').value = data.planillaComprasUrl || '';
+    document.getElementById('info-margen').value = data.margenOperacional ?? '';
+    const dias = data.diasApertura || [];
+    for (let d = 0; d < 7; d++) document.getElementById('info-dia-' + d).checked = dias.includes(d);
   } catch (e) { toast(e.message, 'error'); }
 }
 
@@ -3683,7 +3718,9 @@ async function saveInfo() {
       instagram: document.getElementById('info-instagram').value.trim(),
       facebook: document.getElementById('info-facebook').value.trim(),
       sitioWeb: document.getElementById('info-sitioweb').value.trim(),
-      planillaComprasUrl: document.getElementById('info-planilla-compras').value.trim()
+      planillaComprasUrl: document.getElementById('info-planilla-compras').value.trim(),
+      margenOperacional: parseFloat(document.getElementById('info-margen').value) || 0,
+      diasApertura: [0,1,2,3,4,5,6].filter(d => document.getElementById('info-dia-' + d).checked)
     });
     toast('Información guardada');
   } catch (e) { toast(e.message, 'error'); }
@@ -3921,11 +3958,14 @@ function _gastosNormalise(g) {
   return { ...g, tipo: g.tipo || 'gasto', montos: { [year]: Array(12).fill(monthly) } };
 }
 
+let _gastosInfoConfig = {};
+
 async function loadGastos() {
   _gastosInitYearSel();
   try {
-    const raw = await api('GET', '/gastos-fijos');
+    const [raw, info] = await Promise.all([api('GET', '/gastos-fijos'), api('GET', '/info')]);
     _gastosCache = (Array.isArray(raw) ? raw : []).map(_gastosNormalise);
+    _gastosInfoConfig = { margen: info.margenOperacional || 0, diasApertura: info.diasApertura || [] };
     const year = document.getElementById('gastos-year-sel')?.value || _gastosYear;
     renderGastosTable(_gastosCache, year);
   } catch (e) { toast(e.message, 'error'); }
@@ -4019,6 +4059,52 @@ function renderGastosTable(gastos, year) {
             ${totalGastos.map(v => `<td style="${tdTotal}">${fmt(v)}</td>`).join('')}
             <td style="${tdTotal}">${fmt(sum(totalGastos))}</td>
           </tr>
+
+          ${(() => {
+            const margen = _gastosInfoConfig.margen || 0;
+            const diasApertura = _gastosInfoConfig.diasApertura || [];
+            if (!margen) return `<tr><td colspan="14" style="padding:10px 14px;font-size:12px;color:#9ca3af;font-style:italic">⚙ Configura el % Margen operacional en Info Restaurante para ver el Análisis de Ventas.</td></tr>`;
+
+            const yr = parseInt(_gastosYear) || new Date().getFullYear();
+            const diasDisponibles = Array.from({length:12}, (_,m) => {
+              if (!diasApertura.length) return 0;
+              let count = 0;
+              const daysInMonth = new Date(yr, m+1, 0).getDate();
+              for (let d = 1; d <= daysInMonth; d++) {
+                if (diasApertura.includes(new Date(yr, m, d).getDay())) count++;
+              }
+              return count;
+            });
+
+            const puntoEqNeto  = totalGastos.map(v => margen > 0 ? v / (margen/100) : 0);
+            const puntoEqBruto = puntoEqNeto.map(v => v * 1.19);
+            const ventaDiaria  = puntoEqBruto.map((v,i) => diasDisponibles[i] > 0 ? v / diasDisponibles[i] : 0);
+
+            const tdA  = td + ';color:#374151';
+            const tdAN = tdN + ';color:#374151';
+            const tdAd = td + ';color:#6c757d;font-style:italic';
+
+            return `
+              <tr><td colspan="14" style="padding:16px 0;background:#e9ecef"></td></tr>
+              <tr style="background:#374151">
+                <td colspan="14" style="padding:10px 14px;font-size:12px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:1.2px">Análisis de Ventas — Punto de Equilibrio (Margen ${margen}%)</td>
+              </tr>
+              <tr style="background:#e9ecef">
+                <td colspan="14" style="padding:5px 12px;font-size:10px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.8px">Punto de Equilibrio</td>
+              </tr>
+              ${mkRow('Punto Equilibrio Neto', puntoEqNeto, tdA, tdAN)}
+              ${mkRow('Punto Equilibrio Bruto (+IVA)', puntoEqBruto, tdA, tdAN)}
+              ${diasApertura.length ? `
+              <tr style="background:#e9ecef">
+                <td colspan="14" style="padding:5px 12px;font-size:10px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.8px">Venta Diaria Necesaria</td>
+              </tr>
+              <tr>
+                <td style="${tdAN}">Días disponibles</td>
+                ${diasDisponibles.map(v => `<td style="${tdAd}">${v || '—'}</td>`).join('')}
+                <td style="${tdAd}">${sum(diasDisponibles)}</td>
+              </tr>
+              ${mkRow('Venta diaria necesaria (Bruto)', ventaDiaria, tdA, tdAN)}` : ''}`;
+          })()}
         </tbody>
       </table>
     </div>`;
