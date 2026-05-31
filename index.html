@@ -1014,8 +1014,14 @@
                 <i class="bi bi-search"></i>
                 <input type="text" id="mrg-search" placeholder="Buscar receta..." oninput="filterRecetas()" />
               </div>
+              <select class="form-control" id="mrg-filter-tipo" style="width:auto;padding:8px 12px" onchange="onFilterTipoChange()">
+                <option value="">Todos los tipos</option>
+                <option value="Alimentos">Alimentos</option>
+                <option value="Bebestibles">Bebestibles</option>
+                <option value="Desechables">Desechables</option>
+              </select>
               <select class="form-control" id="mrg-filter-cat" style="width:auto;padding:8px 12px" onchange="filterRecetas()">
-                <option value="">Todas las categorías</option>
+                <option value="">Todas las subcategorías</option>
               </select>
               <select class="form-control" id="mrg-filter-mrg" style="width:auto;padding:8px 12px" onchange="filterRecetas()">
                 <option value="">Todos los márgenes</option>
@@ -3100,13 +3106,8 @@ async function loadMargenes() {
     renderRecetasGrid();
     renderPrepsGrid();
     renderMrgStats();
-    // Populate category filter (ordenado por orden de carta)
-    const catMap = Object.fromEntries(catMenu.map(c => [c.id, c]));
-    const cats = [...new Set(recetas.map(m => m.categoriaMenuId).filter(Boolean))]
-      .sort((a, b) => (catMap[a]?.orden ?? 99) - (catMap[b]?.orden ?? 99));
-    const sel = document.getElementById('mrg-filter-cat');
-    sel.innerHTML = '<option value="">Todas las categorías</option>' +
-      cats.map(c => `<option value="${catMap[c]?.nombre}">${catMap[c]?.nombre}</option>`).join('');
+    // Populate category filters
+    populateMrgCatFilter();
   } catch (e) { toast(e.message, 'error'); }
 }
 
@@ -3178,15 +3179,41 @@ function renderMrgStats() {
   document.getElementById('stat-sobre70').textContent = state.margenes.filter(m => (m.margen||0) >= 70).length;
 }
 
+function populateMrgCatFilter(tipo) {
+  const catMap = Object.fromEntries((state.categoriasMenu || []).map(c => [c.id, c]));
+  const sel = document.getElementById('mrg-filter-cat');
+  const prev = sel.value;
+  // Filtrar subcategorías por tipo si está seleccionado
+  const cats = [...new Set((state.margenes || []).map(m => m.categoriaMenuId).filter(Boolean))]
+    .sort((a, b) => (catMap[a]?.orden ?? 99) - (catMap[b]?.orden ?? 99))
+    .filter(id => !tipo || catMap[id]?.tipo === tipo);
+  sel.innerHTML = '<option value="">Todas las subcategorías</option>' +
+    cats.map(id => `<option value="${catMap[id]?.nombre}">${catMap[id]?.nombre}</option>`).join('');
+  sel.value = prev; // restaurar selección si sigue siendo válida
+}
+
+function onFilterTipoChange() {
+  const tipo = document.getElementById('mrg-filter-tipo').value;
+  populateMrgCatFilter(tipo);
+  document.getElementById('mrg-filter-cat').value = '';
+  filterRecetas();
+}
+
 function filterRecetas() {
   const q = document.getElementById('mrg-search').value.toLowerCase();
+  const tipo = document.getElementById('mrg-filter-tipo').value;
   const cat = document.getElementById('mrg-filter-cat').value;
   const mrg = document.getElementById('mrg-filter-mrg').value;
-  let list = state.margenes.filter(m =>
-    (!q || m.nombre.toLowerCase().includes(q) || (m.categoriaMenu||'').toLowerCase().includes(q)) &&
-    (!cat || m.categoriaMenu === cat) &&
-    (!mrg || (mrg === 'high' && m.margen >= 70) || (mrg === 'mid' && m.margen >= 50 && m.margen < 70) || (mrg === 'low' && m.margen < 50))
-  );
+  const catMap = Object.fromEntries((state.categoriasMenu || []).map(c => [c.nombre, c]));
+  let list = state.margenes.filter(m => {
+    const catObj = catMap[m.categoriaMenu];
+    return (
+      (!q || m.nombre.toLowerCase().includes(q) || (m.categoriaMenu||'').toLowerCase().includes(q)) &&
+      (!tipo || catObj?.tipo === tipo) &&
+      (!cat || m.categoriaMenu === cat) &&
+      (!mrg || (mrg === 'high' && m.margen >= 70) || (mrg === 'mid' && m.margen >= 50 && m.margen < 70) || (mrg === 'low' && m.margen < 50))
+    );
+  });
   renderRecetasGrid(list);
 }
 
