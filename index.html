@@ -1102,52 +1102,18 @@
       <div class="section" id="s-gastos">
         <div class="section-header">
           <h2>Gastos Fijos</h2>
-          <button class="btn btn-primary" onclick="openGastoModal()">
-            <i class="bi bi-plus"></i> Agregar Gasto
-          </button>
-        </div>
-
-        <!-- Resumen -->
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px">
-          <div class="card">
-            <div class="card-body" style="padding:20px">
-              <div style="font-size:0.8rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Total Mensual</div>
-              <div id="gasto-total-mensual" style="font-size:1.8rem;font-weight:800;margin-top:4px">$0</div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-body" style="padding:20px">
-              <div style="font-size:0.8rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Total Anual</div>
-              <div id="gasto-total-anual" style="font-size:1.8rem;font-weight:800;margin-top:4px">$0</div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-body" style="padding:20px">
-              <div style="font-size:0.8rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px">N° de gastos</div>
-              <div id="gasto-count" style="font-size:1.8rem;font-weight:800;margin-top:4px">0</div>
-            </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <select id="gastos-year-sel" class="form-control" style="width:auto;padding:6px 12px" onchange="renderGastosTable(_gastosCache, this.value)"></select>
+            <button class="btn btn-primary" onclick="openGastoModal()">
+              <i class="bi bi-plus"></i> Nuevo Gasto
+            </button>
           </div>
         </div>
 
         <div class="card">
           <div class="card-body" style="padding:0">
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Nombre</th>
-                    <th>Categoría</th>
-                    <th>Frecuencia</th>
-                    <th>Monto</th>
-                    <th>Equiv. Mensual</th>
-                    <th>Notas</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody id="gasto-table-body">
-                  <tr><td colspan="7"><div class="loading-overlay"><div class="spinner spinner-dark"></div></div></td></tr>
-                </tbody>
-              </table>
+            <div id="gastos-table-wrap" style="overflow:auto">
+              <div class="loading"><div class="spinner"></div><span>Cargando...</span></div>
             </div>
           </div>
         </div>
@@ -1808,7 +1774,7 @@
 
 <!-- Modal Gasto Fijo -->
 <div class="modal-overlay" id="modal-gasto">
-  <div class="modal-box" style="max-width:520px">
+  <div class="modal-box" style="max-width:680px">
     <div class="modal-header">
       <h3 id="modal-gasto-title">Nuevo Gasto Fijo</h3>
       <button class="btn-close-modal" onclick="closeModal('modal-gasto')"><i class="bi bi-x-lg"></i></button>
@@ -1825,26 +1791,29 @@
           <input type="text" id="gasto-categoria" class="form-control" placeholder="Ej: Arriendo, Servicios..." />
         </div>
       </div>
-      <div class="form-row">
-        <div class="form-group" style="flex:1">
-          <label class="form-label">Monto ($) *</label>
-          <input type="number" id="gasto-monto" class="form-control" placeholder="0" min="0" step="1" />
+      <div class="form-group">
+        <label class="form-label">Tipo</label>
+        <div style="display:flex;gap:20px;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+            <input type="radio" name="gasto-tipo" id="gasto-tipo-gasto" value="gasto" checked /> Gasto Fijo
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+            <input type="radio" name="gasto-tipo" id="gasto-tipo-sueldo" value="sueldo" /> Sueldo
+          </label>
         </div>
-        <div class="form-group" style="flex:1">
-          <label class="form-label">Frecuencia</label>
-          <select id="gasto-frecuencia" class="form-control">
-            <option value="mensual">Mensual</option>
-            <option value="semanal">Semanal</option>
-            <option value="anual">Anual</option>
-            <option value="bimestral">Bimestral</option>
-            <option value="trimestral">Trimestral</option>
-            <option value="diario">Diario</option>
-          </select>
+      </div>
+      <div class="form-group">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <label class="form-label" style="margin:0">Montos por mes ($)</label>
+          <button type="button" class="btn btn-outline btn-sm" onclick="replicarEne()" style="font-size:12px;padding:3px 10px">&#8596; Replicar Enero a todos</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px" id="gasto-montos-grid">
+          <!-- filled by JS -->
         </div>
       </div>
       <div class="form-group">
         <label class="form-label">Notas</label>
-        <input type="text" id="gasto-notas" class="form-control" placeholder="Ej: Vence el 5 de cada mes" />
+        <textarea id="gasto-notas" class="form-control" rows="2" placeholder="Ej: Vence el 5 de cada mes" style="resize:vertical"></textarea>
       </div>
     </div>
     <div class="modal-footer">
@@ -3928,82 +3897,194 @@ function renderEerrTable(rows) {
 }
 
 // ═══════════════════════════════════════════════════════ GASTOS FIJOS ════
-const FREQ_A_MENSUAL = { diario: 30, semanal: 4.33, mensual: 1, bimestral: 0.5, trimestral: 0.333, anual: 1/12 };
+const GASTOS_MONTHS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const FREQ_A_MENSUAL = { diario: 30, semanal: 4.33, mensual: 1, bimestral: 0.5, trimestral: 1/3, anual: 1/12 };
+
+let _gastosCache = [];
+let _gastosYear  = String(new Date().getFullYear());
+
+function _gastosInitYearSel() {
+  const sel = document.getElementById('gastos-year-sel');
+  if (!sel || sel.options.length > 0) return;
+  const cur = new Date().getFullYear();
+  sel.innerHTML = [cur - 1, cur, cur + 1].map(y =>
+    `<option value="${y}" ${y === cur ? 'selected' : ''}>${y}</option>`
+  ).join('');
+  _gastosYear = String(cur);
+}
+
+// Migration helper: old gasto has monto+frecuencia but no montos
+function _gastosNormalise(g) {
+  if (g.montos && typeof g.montos === 'object') return g;
+  const monthly = Math.round((parseFloat(g.monto) || 0) * (FREQ_A_MENSUAL[g.frecuencia] || 1));
+  const year = String(new Date().getFullYear());
+  return { ...g, tipo: g.tipo || 'gasto', montos: { [year]: Array(12).fill(monthly) } };
+}
 
 async function loadGastos() {
+  _gastosInitYearSel();
   try {
-    const gastos = await api('GET', '/gastos-fijos');
-    renderGastos(gastos);
+    const raw = await api('GET', '/gastos-fijos');
+    _gastosCache = (Array.isArray(raw) ? raw : []).map(_gastosNormalise);
+    const year = document.getElementById('gastos-year-sel')?.value || _gastosYear;
+    renderGastosTable(_gastosCache, year);
   } catch (e) { toast(e.message, 'error'); }
 }
 
-function renderGastos(gastos) {
-  const tbody = document.getElementById('gasto-table-body');
+function renderGastosTable(gastos, year) {
+  _gastosYear = String(year);
+  const wrap = document.getElementById('gastos-table-wrap');
+  if (!wrap) return;
+
+  const fmt = n => (!n || n === 0) ? '—' : '$' + Math.round(n).toLocaleString('es-CL');
+  const sum = arr => arr.reduce((a, b) => a + (b || 0), 0);
+
+  const getMontos = g => {
+    const arr = (g.montos && g.montos[year]) ? g.montos[year] : Array(12).fill(0);
+    return Array(12).fill(0).map((_, i) => arr[i] || 0);
+  };
+
+  const gastosFixed   = gastos.filter(g => (g.tipo || 'gasto') !== 'sueldo');
+  const gastosSueldos = gastos.filter(g => g.tipo === 'sueldo');
+
+  const totFixed   = Array(12).fill(0);
+  gastosFixed.forEach(g => { getMontos(g).forEach((v, i) => { totFixed[i] += v; }); });
+
+  const totSueldos = Array(12).fill(0);
+  gastosSueldos.forEach(g => { getMontos(g).forEach((v, i) => { totSueldos[i] += v; }); });
+
+  const totalGastos = totFixed.map((v, i) => v + totSueldos[i]);
+
+  const thStyle  = 'padding:10px 8px;font-size:11px;font-weight:600;color:#6c757d;text-transform:uppercase;letter-spacing:.3px;text-align:right;white-space:nowrap;border-bottom:2px solid #e9ecef';
+  const thName   = 'padding:10px 12px;font-size:11px;font-weight:600;color:#6c757d;text-transform:uppercase;letter-spacing:.3px;text-align:left;white-space:nowrap;border-bottom:2px solid #e9ecef;position:sticky;left:0;z-index:2;background:#f9fafb';
+  const td       = 'padding:9px 8px;font-size:13px;color:#374151;text-align:right;border-bottom:1px solid #f0f0f0;white-space:nowrap';
+  const tdN      = 'padding:9px 12px;font-size:13px;color:#212529;border-bottom:1px solid #f0f0f0;white-space:nowrap;position:sticky;left:0;z-index:1;background:#fff';
+  const tdS      = 'padding:9px 8px;font-size:13px;font-weight:700;color:#212529;text-align:right;border-bottom:1px solid #dee2e6;background:#f8f9fa;white-space:nowrap';
+  const tdSN     = 'padding:9px 12px;font-size:13px;font-weight:700;color:#212529;border-bottom:1px solid #dee2e6;background:#f8f9fa;white-space:nowrap;position:sticky;left:0;z-index:1';
+  const tdTotal  = 'padding:11px 8px;font-size:13px;font-weight:800;color:#1e3a5f;text-align:right;border-top:2px solid var(--primary);background:#f0f4ff;white-space:nowrap';
+  const tdTotalN = 'padding:11px 12px;font-size:14px;font-weight:800;color:#1e3a5f;border-top:2px solid var(--primary);background:#f0f4ff;white-space:nowrap;position:sticky;left:0;z-index:1';
+
+  const secHead = label => `<tr style="background:#374151">
+    <td colspan="14" style="padding:7px 12px;font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:1px">${label}</td>
+  </tr>`;
+
+  const mkRow = (label, vals, style, nameStyle) => `<tr>
+    <td style="${nameStyle}">${label}</td>
+    ${vals.map(v => `<td style="${style}">${fmt(v)}</td>`).join('')}
+    <td style="${style};font-weight:700">${fmt(sum(vals))}</td>
+  </tr>`;
+
+  const mkGastoRows = list => list.map(g => {
+    const ms = getMontos(g);
+    return `<tr>
+      <td style="${tdN}">
+        <strong>${g.nombre}</strong>
+        ${g.categoria ? `<span style="font-size:11px;color:#9ca3af;margin-left:6px">${g.categoria}</span>` : ''}
+        <button onclick="openGastoModal('${g.id}')" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:12px;padding:0 4px;vertical-align:middle" title="Editar">✏️</button>
+        <button onclick="deleteGasto('${g.id}','${g.nombre.replace(/'/g,"&#39;")}')" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:14px;padding:0 2px;vertical-align:middle" title="Eliminar">×</button>
+      </td>
+      ${ms.map(v => `<td style="${td}">${fmt(v)}</td>`).join('')}
+      <td style="${td};font-weight:600">${fmt(sum(ms))}</td>
+    </tr>`;
+  }).join('');
+
   if (!gastos.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><i class="bi bi-cash-stack"></i><p>No hay gastos registrados.</p></div></td></tr>`;
-    document.getElementById('gasto-total-mensual').textContent = '$0';
-    document.getElementById('gasto-total-anual').textContent = '$0';
-    document.getElementById('gasto-count').textContent = '0';
+    wrap.innerHTML = `<div class="empty-state" style="padding:48px"><i class="bi bi-cash-stack"></i><p>No hay gastos registrados.</p></div>`;
     return;
   }
 
-  let totalMensual = 0;
-  gastos.forEach(g => { totalMensual += g.monto * (FREQ_A_MENSUAL[g.frecuencia] || 1); });
+  wrap.innerHTML = `
+    <div style="background:#fff;border-radius:0;overflow:auto">
+      <table style="width:100%;border-collapse:collapse;min-width:1100px">
+        <thead>
+          <tr style="background:#f9fafb">
+            <th style="${thName};min-width:220px">Concepto</th>
+            ${GASTOS_MONTHS.map(m => `<th style="${thStyle}">${m}</th>`).join('')}
+            <th style="${thStyle}">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${secHead('Gastos Fijos')}
+          ${mkGastoRows(gastosFixed)}
+          ${mkRow('Total Gastos Fijos', totFixed, tdS, tdSN)}
+          <tr><td colspan="14" style="padding:4px 0;background:#f0f4f8"></td></tr>
 
-  document.getElementById('gasto-total-mensual').textContent = '$' + Math.round(totalMensual).toLocaleString('es-CL');
-  document.getElementById('gasto-total-anual').textContent = '$' + Math.round(totalMensual * 12).toLocaleString('es-CL');
-  document.getElementById('gasto-count').textContent = gastos.length;
+          ${secHead('Sueldos')}
+          ${mkGastoRows(gastosSueldos)}
+          ${mkRow('Total Sueldos', totSueldos, tdS, tdSN)}
+          <tr><td colspan="14" style="padding:4px 0;background:#f0f4f8"></td></tr>
 
-  const FREQ_LABEL = { diario:'Diario', semanal:'Semanal', mensual:'Mensual', bimestral:'Bimestral', trimestral:'Trimestral', anual:'Anual' };
-  tbody.innerHTML = gastos.map(g => {
-    const equiv = g.monto * (FREQ_A_MENSUAL[g.frecuencia] || 1);
-    return `<tr>
-      <td><strong>${g.nombre}</strong></td>
-      <td>${g.categoria || '—'}</td>
-      <td><span class="badge badge-gray">${FREQ_LABEL[g.frecuencia] || g.frecuencia}</span></td>
-      <td>$${g.monto.toLocaleString('es-CL')}</td>
-      <td style="color:var(--muted)">$${Math.round(equiv).toLocaleString('es-CL')}/mes</td>
-      <td style="font-size:0.83rem;color:var(--muted)">${g.notas || '—'}</td>
-      <td style="text-align:right;white-space:nowrap">
-        <button class="btn btn-outline btn-sm btn-icon" onclick="editGasto('${g.id}')" title="Editar"><i class="bi bi-pencil"></i></button>
-        <button class="btn btn-outline btn-sm btn-icon" onclick="deleteGasto('${g.id}')" title="Eliminar" style="margin-left:4px"><i class="bi bi-trash"></i></button>
-      </td>
-    </tr>`;
-  }).join('');
+          <tr>
+            <td style="${tdTotalN}">TOTAL GASTOS</td>
+            ${totalGastos.map(v => `<td style="${tdTotal}">${fmt(v)}</td>`).join('')}
+            <td style="${tdTotal}">${fmt(sum(totalGastos))}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>`;
 }
 
-let _gastosCache = [];
+// Build the month inputs grid inside the modal
+function _buildMontosGrid(montos12) {
+  const grid = document.getElementById('gasto-montos-grid');
+  grid.innerHTML = GASTOS_MONTHS.map((m, i) => `
+    <div style="display:flex;align-items:center;gap:4px">
+      <span style="font-size:12px;color:#6c757d;width:30px">${m}</span>
+      <span style="color:#6c757d">$</span>
+      <input type="number" id="gasto-mes-${i}" class="form-control" min="0" step="1"
+        style="padding:5px 8px;font-size:13px"
+        placeholder="0" value="${montos12[i] || ''}" />
+    </div>`).join('');
+}
 
 function openGastoModal(id) {
+  _gastosInitYearSel();
   const g = id ? _gastosCache.find(x => x.id === id) : null;
   document.getElementById('modal-gasto-title').textContent = g ? 'Editar Gasto Fijo' : 'Nuevo Gasto Fijo';
   document.getElementById('gasto-id').value = g?.id || '';
   document.getElementById('gasto-nombre').value = g?.nombre || '';
   document.getElementById('gasto-categoria').value = g?.categoria || '';
-  document.getElementById('gasto-monto').value = g?.monto || '';
-  document.getElementById('gasto-frecuencia').value = g?.frecuencia || 'mensual';
   document.getElementById('gasto-notas').value = g?.notas || '';
+  const tipo = g?.tipo || 'gasto';
+  document.getElementById('gasto-tipo-gasto').checked  = tipo !== 'sueldo';
+  document.getElementById('gasto-tipo-sueldo').checked = tipo === 'sueldo';
+  const year = _gastosYear;
+  const montos12 = g?.montos?.[year] ? g.montos[year] : Array(12).fill('');
+  _buildMontosGrid(montos12);
   openModal('modal-gasto');
 }
 
-async function editGasto(id) {
-  if (!_gastosCache.length) _gastosCache = await api('GET', '/gastos-fijos');
-  openGastoModal(id);
+function replicarEne() {
+  const val = parseFloat(document.getElementById('gasto-mes-0')?.value) || 0;
+  for (let i = 1; i < 12; i++) {
+    const inp = document.getElementById('gasto-mes-' + i);
+    if (inp) inp.value = val || '';
+  }
 }
 
 async function saveGasto() {
-  const id = document.getElementById('gasto-id').value;
-  const body = {
-    nombre: document.getElementById('gasto-nombre').value.trim(),
-    categoria: document.getElementById('gasto-categoria').value.trim(),
-    monto: parseFloat(document.getElementById('gasto-monto').value) || 0,
-    frecuencia: document.getElementById('gasto-frecuencia').value,
-    notas: document.getElementById('gasto-notas').value.trim()
-  };
-  if (!body.nombre) { toast('El nombre es requerido', 'error'); return; }
+  const id     = document.getElementById('gasto-id').value;
+  const nombre = document.getElementById('gasto-nombre').value.trim();
+  if (!nombre) { toast('El nombre es requerido', 'error'); return; }
+
+  const tipo      = document.querySelector('input[name="gasto-tipo"]:checked')?.value || 'gasto';
+  const categoria = document.getElementById('gasto-categoria').value.trim();
+  const notas     = document.getElementById('gasto-notas').value.trim();
+  const year      = _gastosYear;
+
+  // Read 12 month inputs
+  const arr12 = Array.from({length: 12}, (_, i) =>
+    Math.round(parseFloat(document.getElementById('gasto-mes-' + i)?.value) || 0)
+  );
+
+  // Preserve existing montos for other years
+  const existing = id ? (_gastosCache.find(x => x.id === id)?.montos || {}) : {};
+  const montos   = { ...existing, [year]: arr12 };
+
+  const body = { nombre, tipo, categoria, notas, montos };
   try {
     if (id) await api('PUT', '/gastos-fijos/' + id, body);
-    else await api('POST', '/gastos-fijos', body);
+    else     await api('POST', '/gastos-fijos', body);
     toast(id ? 'Gasto actualizado' : 'Gasto agregado');
     closeModal('modal-gasto');
     _gastosCache = [];
@@ -4011,8 +4092,8 @@ async function saveGasto() {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-async function deleteGasto(id) {
-  if (!confirm('¿Eliminar este gasto?')) return;
+async function deleteGasto(id, nombre) {
+  if (!confirm('¿Eliminar "' + (nombre || 'este gasto') + '"?')) return;
   try {
     await api('DELETE', '/gastos-fijos/' + id);
     toast('Gasto eliminado');

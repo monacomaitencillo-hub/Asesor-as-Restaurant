@@ -961,15 +961,27 @@ app.get('/api/gastos-fijos', requireAuth, async (req, res) => {
 
 app.post('/api/gastos-fijos', requireAuth, async (req, res) => {
   try {
-    const { nombre, monto, frecuencia, categoria, notas } = req.body;
+    const { nombre, tipo, montos, categoria, notas, monto, frecuencia } = req.body;
     if (!nombre) return res.status(400).json({ error: 'nombre es requerido' });
     const data = {
-      nombre: nombre.trim(), monto: parseFloat(monto) || 0,
-      frecuencia: frecuencia || 'mensual',
+      nombre: nombre.trim(),
+      tipo: tipo || 'gasto',
       categoria: categoria?.trim() || '',
       notas: notas?.trim() || '',
       creadoEn: TS(), actualizadoEn: TS()
     };
+    // New format: montos map
+    if (montos && typeof montos === 'object') {
+      data.montos = montos;
+    } else {
+      // Legacy: convert monto+frecuencia to montos['2026']
+      const FREQ = { diario: 30, semanal: 4.33, mensual: 1, bimestral: 0.5, trimestral: 1/3, anual: 1/12 };
+      const monthly = (parseFloat(monto) || 0) * (FREQ[frecuencia] || 1);
+      const year = String(new Date().getFullYear());
+      data.montos = { [year]: Array(12).fill(Math.round(monthly)) };
+      data.monto = parseFloat(monto) || 0;
+      data.frecuencia = frecuencia || 'mensual';
+    }
     const ref = await col(req, 'gastosFijos').add(data);
     res.json({ id: ref.id });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -977,14 +989,25 @@ app.post('/api/gastos-fijos', requireAuth, async (req, res) => {
 
 app.put('/api/gastos-fijos/:id', requireAuth, async (req, res) => {
   try {
-    const { nombre, monto, frecuencia, categoria, notas } = req.body;
-    await col(req, 'gastosFijos').doc(req.params.id).update({
-      nombre: nombre?.trim(), monto: parseFloat(monto) || 0,
-      frecuencia: frecuencia || 'mensual',
+    const { nombre, tipo, montos, categoria, notas, monto, frecuencia } = req.body;
+    const update = {
+      nombre: nombre?.trim(),
+      tipo: tipo || 'gasto',
       categoria: categoria?.trim() || '',
       notas: notas?.trim() || '',
       actualizadoEn: TS()
-    });
+    };
+    if (montos && typeof montos === 'object') {
+      update.montos = montos;
+    } else {
+      const FREQ = { diario: 30, semanal: 4.33, mensual: 1, bimestral: 0.5, trimestral: 1/3, anual: 1/12 };
+      const monthly = (parseFloat(monto) || 0) * (FREQ[frecuencia] || 1);
+      const year = String(new Date().getFullYear());
+      update.montos = { [year]: Array(12).fill(Math.round(monthly)) };
+      update.monto = parseFloat(monto) || 0;
+      update.frecuencia = frecuencia || 'mensual';
+    }
+    await col(req, 'gastosFijos').doc(req.params.id).update(update);
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
