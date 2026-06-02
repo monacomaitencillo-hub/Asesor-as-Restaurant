@@ -121,6 +121,7 @@ app.post('/api/ingredientes', requireAuth, async (req, res) => {
       unidad: req.body.unidad || 'kg',
       tipoImpuesto: req.body.tipoImpuesto || 'alimento',
       capacidadCC: parseFloat(req.body.capacidadCC) || 0,
+      tieneCapacidad: req.body.tieneCapacidad === true || req.body.tieneCapacidad === 'true',
       proveedorIds: req.body.proveedorIds || [],
       costo: parseFloat(req.body.costo) || 0,
       stockMinimo: parseFloat(req.body.stockMinimo) || 0,
@@ -143,6 +144,7 @@ app.put('/api/ingredientes/:id', requireAuth, async (req, res) => {
       unidad: req.body.unidad || 'kg',
       tipoImpuesto: req.body.tipoImpuesto || 'alimento',
       capacidadCC: parseFloat(req.body.capacidadCC) || 0,
+      tieneCapacidad: req.body.tieneCapacidad === true || req.body.tieneCapacidad === 'true',
       proveedorIds: req.body.proveedorIds || [],
       stockMinimo: parseFloat(req.body.stockMinimo) || 0,
       enInventario: req.body.enInventario !== false,
@@ -182,9 +184,13 @@ app.post('/api/ingredientes/:id/precios', requireAuth, async (req, res) => {
     const cant = parseFloat(cantidadCompra) || 1;
     const unidades = parseFloat(unidadesEnvase) || 1;
     const ingDoc = await col(req, 'ingredientes').doc(req.params.id).get();
-    const tasaAdicional = IMP_ADICIONAL[ingDoc.data()?.tipoImpuesto] ?? 0;
+    const ingData = ingDoc.data() || {};
+    const tasaAdicional = IMP_ADICIONAL[ingData.tipoImpuesto] ?? 0;
     const precioConDesc = pn * (1 - desc / 100);
     const costoUnitario = (precioConDesc * (1 + tasaAdicional) + flete) / cant;
+    const capacidadCC = ingData.capacidadCC || 0;
+    const tieneCapacidad = ingData.tieneCapacidad && capacidadCC > 0;
+    const costoFinal = tieneCapacidad ? costoUnitario / capacidadCC : costoUnitario;
 
     const data = {
       mes,
@@ -203,7 +209,7 @@ app.post('/api/ingredientes/:id/precios', requireAuth, async (req, res) => {
 
     // Actualizar costo actual del ingrediente con el último precio
     await col(req, 'ingredientes').doc(req.params.id).update({
-      costo: costoUnitario,
+      costo: costoFinal,
       actualizadoEn: TS()
     });
 
@@ -220,9 +226,13 @@ app.put('/api/ingredientes/:id/precios/:precioId', requireAuth, async (req, res)
     const cant = parseFloat(cantidadCompra) || 1;
     const unidades = parseFloat(unidadesEnvase) || 1;
     const ingDoc = await col(req, 'ingredientes').doc(req.params.id).get();
-    const tasaAdicional = IMP_ADICIONAL[ingDoc.data()?.tipoImpuesto] ?? 0;
+    const ingData = ingDoc.data() || {};
+    const tasaAdicional = IMP_ADICIONAL[ingData.tipoImpuesto] ?? 0;
     const precioConDesc = pn * (1 - desc / 100);
     const costoUnitario = (precioConDesc * (1 + tasaAdicional) + flete) / cant;
+    const capacidadCC = ingData.capacidadCC || 0;
+    const tieneCapacidad = ingData.tieneCapacidad && capacidadCC > 0;
+    const costoFinal = tieneCapacidad ? costoUnitario / capacidadCC : costoUnitario;
 
     await col(req, 'ingredientes').doc(req.params.id)
       .collection('historialPrecios').doc(req.params.precioId).update({
@@ -233,7 +243,7 @@ app.put('/api/ingredientes/:id/precios/:precioId', requireAuth, async (req, res)
 
     // Actualizar costo actual del ingrediente
     await col(req, 'ingredientes').doc(req.params.id).update({
-      costo: costoUnitario,
+      costo: costoFinal,
       actualizadoEn: TS()
     });
 
