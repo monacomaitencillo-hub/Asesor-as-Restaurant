@@ -717,6 +717,7 @@
                   <thead>
                     <tr>
                       <th>Nombre</th>
+                      <th>Proveedor</th>
                       <th>Categoría</th>
                       <th>Unidad</th>
                       <th>Tipo impuesto</th>
@@ -726,7 +727,7 @@
                     </tr>
                   </thead>
                   <tbody id="ing-table-body">
-                    <tr><td colspan="7"><div class="loading-overlay"><div class="spinner spinner-dark"></div></div></td></tr>
+                    <tr><td colspan="8"><div class="loading-overlay"><div class="spinner spinner-dark"></div></div></td></tr>
                   </tbody>
                 </table>
               </div>
@@ -2438,7 +2439,7 @@ function renderIngredientes(list) {
   const rows = (list || state.ingredientes);
   const tbody = document.getElementById('ing-table-body');
   if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><i class="bi bi-box-seam"></i><p>No hay ingredientes. Creá el primero.</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="bi bi-box-seam"></i><p>No hay ingredientes. Creá el primero.</p></div></td></tr>`;
     return;
   }
 
@@ -2452,6 +2453,7 @@ function renderIngredientes(list) {
     const impLabel = TIPOS_IMPUESTO[ing.tipoImpuesto] || ing.tipoImpuesto || '—';
     return `<tr>
       <td><strong>${ing.nombre}</strong></td>
+      <td style="font-size:0.85rem;color:var(--muted)">${provNombres}</td>
       <td>${ing.categoria || '<span style="color:var(--muted)">—</span>'}</td>
       <td>${ing.unidad || '—'}</td>
       <td style="font-size:0.8rem">${impLabel}</td>
