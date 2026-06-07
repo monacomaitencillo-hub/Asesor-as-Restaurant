@@ -855,6 +855,28 @@ app.get('/api/compras/periodos', requireAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ─── EERR INGRESOS ────────────────────────────────────────────────────────────
+app.get('/api/eerr-ingresos', requireAuth, async (req, res) => {
+  try {
+    const snap = await col(req, 'eerrIngresos').get();
+    const data = {};
+    snap.docs.forEach(d => { data[d.id] = d.data(); });
+    res.json(data);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/eerr-ingresos/:periodo', requireAuth, async (req, res) => {
+  try {
+    const { ventasBrutas, ventasBrutasConDescuento } = req.body;
+    await col(req, 'eerrIngresos').doc(req.params.periodo).set({
+      ventasBrutas: parseFloat(ventasBrutas) || 0,
+      ventasBrutasConDescuento: parseFloat(ventasBrutasConDescuento) || 0,
+      actualizadoEn: TS()
+    }, { merge: true });
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── ALERTAS ──────────────────────────────────────────────────────────────────
 app.get('/api/alertas', requireAuth, async (req, res) => {
   try {

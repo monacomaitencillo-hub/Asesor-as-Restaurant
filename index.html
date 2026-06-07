@@ -3776,10 +3776,12 @@ async function saveInfo() {
 // ═══════════════════════════════════════════════════════ EERR ════════════
 async function loadEERR() {
   try {
-    const [periodos, info] = await Promise.all([
+    const [periodos, info, ingresos] = await Promise.all([
       api('GET', '/compras/periodos'),
-      api('GET', '/info')
+      api('GET', '/info'),
+      api('GET', '/eerr-ingresos').catch(() => ({}))
     ]);
+    _eerrIngresos = ingresos || {};
     // Load saved URL into input
     const urlInput = document.getElementById('eerr-planilla-url');
     if (urlInput && info.planillaComprasUrl) urlInput.value = info.planillaComprasUrl;
@@ -3824,6 +3826,25 @@ async function syncCompras() {
 }
 
 let _eerrAllCompras = [];
+let _eerrIngresos = {}; // { 'YYYY-MM': { ventasBrutas, ventasBrutasConDescuento } }
+
+let _eerrSaveTimer = null;
+function scheduleEerrSave(periodo) {
+  clearTimeout(_eerrSaveTimer);
+  _eerrSaveTimer = setTimeout(() => saveEerrIngresos(periodo), 800);
+}
+
+async function saveEerrIngresos(periodo) {
+  const vb  = parseFloat(document.getElementById(`eerr-vb-${periodo}`)?.value.replace(/\./g,'').replace(',','.')) || 0;
+  const vbd = parseFloat(document.getElementById(`eerr-vbd-${periodo}`)?.value.replace(/\./g,'').replace(',','.')) || 0;
+  _eerrIngresos[periodo] = { ventasBrutas: vb, ventasBrutasConDescuento: vbd };
+  // Recalc venta neta display
+  const vn = vbd > 0 ? vbd / 1.19 : 0;
+  const el = document.getElementById(`eerr-vn-${periodo}`);
+  if (el) el.textContent = vn > 0 ? '$' + Math.round(vn).toLocaleString('es-CL') : '-';
+  try { await api('PUT', `/eerr-ingresos/${periodo}`, { ventasBrutas: vb, ventasBrutasConDescuento: vbd }); }
+  catch (e) { console.error('Error guardando ingresos:', e.message); }
+}
 
 async function onEerrFilterChange() {
   const periodo = document.getElementById('eerr-filter-periodo').value;
@@ -3868,12 +3889,113 @@ function renderEerrTable(rows) {
   const thS = (extra='') => `padding:8px 14px;color:#fff;font-weight:600;background:#16213e;position:sticky;top:0;z-index:2;${extra}`;
   const thL = (extra='') => `padding:6px 14px;color:#aab4c8;font-weight:500;font-size:0.78rem;background:#16213e;position:sticky;top:36px;z-index:2;${extra}`;
 
-  if (!rows.length) {
-    content.innerHTML = '<div class="empty-state"><i class="bi bi-bar-chart-line"></i><p>Sin datos para este período.</p></div>';
-    return;
+  const periodoActivo = document.getElementById('eerr-filter-periodo').value;
+
+  // ── INGRESOS SECTION ────────────────────────────────────────────────────────
+  const ingStyle = 'padding:10px 14px;font-size:13px';
+  const ingLabelStyle = `${ingStyle};font-weight:500;white-space:nowrap`;
+  const ingCalcStyle = `${ingStyle};text-align:right;color:#1a7a4a;font-weight:600`;
+
+  let ingresosHtml = '';
+  if (periodoActivo) {
+    const d = _eerrIngresos[periodoActivo] || {};
+    const vb  = d.ventasBrutas || 0;
+    const vbd = d.ventasBrutasConDescuento || 0;
+    const vn  = vbd > 0 ? vbd / 1.19 : 0;
+    ingresosHtml = `
+      <div class="card" style="margin-bottom:16px;padding:0;overflow:hidden">
+        <div style="background:#16213e;padding:10px 16px;font-size:12px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:1px">Ingresos</div>
+        <table style="width:100%;border-collapse:collapse">
+          <tr style="border-bottom:1px solid #f0f0f0">
+            <td style="${ingLabelStyle}">Ventas Brutas</td>
+            <td style="padding:8px 14px;text-align:right">
+              <div style="display:flex;align-items:center;justify-content:flex-end;gap:4px">
+                <span style="color:var(--muted)">$</span>
+                <input type="number" id="eerr-vb-${periodoActivo}" value="${vb || ''}" placeholder="0"
+                  style="width:160px;text-align:right;padding:5px 8px;border:1px solid #dee2e6;border-radius:6px;font-size:13px"
+                  oninput="scheduleEerrSave('${periodoActivo}')" />
+              </div>
+            </td>
+          </tr>
+          <tr style="border-bottom:1px solid #f0f0f0">
+            <td style="${ingLabelStyle}">Ventas Brutas con Descuento</td>
+            <td style="padding:8px 14px;text-align:right">
+              <div style="display:flex;align-items:center;justify-content:flex-end;gap:4px">
+                <span style="color:var(--muted)">$</span>
+                <input type="number" id="eerr-vbd-${periodoActivo}" value="${vbd || ''}" placeholder="0"
+                  style="width:160px;text-align:right;padding:5px 8px;border:1px solid #dee2e6;border-radius:6px;font-size:13px"
+                  oninput="scheduleEerrSave('${periodoActivo}')" />
+              </div>
+            </td>
+          </tr>
+          <tr style="background:#f0fdf4">
+            <td style="${ingLabelStyle}">Venta Neta con Dcto <span style="font-size:11px;color:var(--muted);font-weight:400">(÷ 1,19)</span></td>
+            <td id="eerr-vn-${periodoActivo}" style="${ingCalcStyle}">${fmtM(vn)}</td>
+          </tr>
+        </table>
+      </div>`;
+  } else {
+    // All periods pivot for ingresos
+    const periodos = [...new Set(rows.map(r => r.periodo))].sort();
+    const totVb  = periodos.reduce((s,p) => s + ((_eerrIngresos[p]?.ventasBrutas) || 0), 0);
+    const totVbd = periodos.reduce((s,p) => s + ((_eerrIngresos[p]?.ventasBrutasConDescuento) || 0), 0);
+    const totVn  = totVbd > 0 ? totVbd / 1.19 : 0;
+    const thCol = `padding:8px 12px;color:#fff;font-weight:600;background:#16213e;text-align:right;border-left:1px solid #2a3a5e;white-space:nowrap`;
+    ingresosHtml = `
+      <div class="card" style="margin-bottom:16px;padding:0;overflow:auto">
+        <table style="border-collapse:collapse;min-width:600px;width:100%">
+          <thead>
+            <tr>
+              <th style="${thS('text-align:left;position:sticky;left:0;z-index:3')}">Ingresos</th>
+              ${periodos.map(p => `<th style="${thCol}">${fmtP(p)}</th>`).join('')}
+              <th style="${thCol}">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid #f0f0f0">
+              <td style="${ingLabelStyle};position:sticky;left:0;background:#fff;z-index:1">Ventas Brutas</td>
+              ${periodos.map(p => {
+                const d = _eerrIngresos[p] || {};
+                return `<td style="padding:8px 12px;text-align:right;border-left:1px solid #e9ecef">
+                  <input type="number" id="eerr-vb-${p}" value="${d.ventasBrutas || ''}" placeholder="0"
+                    style="width:130px;text-align:right;padding:4px 6px;border:1px solid #dee2e6;border-radius:6px;font-size:12px"
+                    oninput="scheduleEerrSave('${p}')" />
+                </td>`;
+              }).join('')}
+              <td style="padding:8px 12px;text-align:right;font-weight:600;border-left:1px solid #e9ecef">${fmtM(totVb)}</td>
+            </tr>
+            <tr style="border-bottom:1px solid #f0f0f0">
+              <td style="${ingLabelStyle};position:sticky;left:0;background:#fff;z-index:1">Ventas Brutas con Descuento</td>
+              ${periodos.map(p => {
+                const d = _eerrIngresos[p] || {};
+                return `<td style="padding:8px 12px;text-align:right;border-left:1px solid #e9ecef">
+                  <input type="number" id="eerr-vbd-${p}" value="${d.ventasBrutasConDescuento || ''}" placeholder="0"
+                    style="width:130px;text-align:right;padding:4px 6px;border:1px solid #dee2e6;border-radius:6px;font-size:12px"
+                    oninput="scheduleEerrSave('${p}')" />
+                </td>`;
+              }).join('')}
+              <td style="padding:8px 12px;text-align:right;font-weight:600;border-left:1px solid #e9ecef">${fmtM(totVbd)}</td>
+            </tr>
+            <tr style="background:#f0fdf4">
+              <td style="${ingLabelStyle};position:sticky;left:0;background:#f0fdf4;z-index:1;color:#1a7a4a;font-weight:600">
+                Venta Neta con Dcto <span style="font-size:11px;font-weight:400;color:#6c757d">(÷ 1,19)</span>
+              </td>
+              ${periodos.map(p => {
+                const vbd = (_eerrIngresos[p]?.ventasBrutasConDescuento) || 0;
+                const vn = vbd > 0 ? vbd / 1.19 : 0;
+                return `<td id="eerr-vn-${p}" style="padding:8px 12px;text-align:right;color:#1a7a4a;font-weight:600;border-left:1px solid #e9ecef">${fmtM(vn)}</td>`;
+              }).join('')}
+              <td style="padding:8px 12px;text-align:right;color:#1a7a4a;font-weight:700;border-left:1px solid #e9ecef">${fmtM(totVn)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>`;
   }
 
-  const periodoActivo = document.getElementById('eerr-filter-periodo').value;
+  if (!rows.length) {
+    content.innerHTML = ingresosHtml + '<div class="empty-state"><i class="bi bi-bar-chart-line"></i><p>Sin datos de compras para este período.</p></div>';
+    return;
+  }
   const tipos = [...new Set(rows.map(r => r.tipoGasto || 'Sin clasificar'))].sort();
 
   // Aggregate by tipo
@@ -3889,7 +4011,7 @@ function renderEerrTable(rows) {
     // Vista un mes: Tipo | Neto | IVA Recup. | Total (neto+iva)
     const totalNeto = tipos.reduce((s, t) => s + (byTipo[t]?.neto || 0), 0);
     const totalIva  = tipos.reduce((s, t) => s + (byTipo[t]?.iva  || 0), 0);
-    content.innerHTML = `
+    content.innerHTML = ingresosHtml + `
       <div class="card" style="padding:0;overflow:auto;max-height:72vh">
         <table style="border-collapse:collapse;width:100%;min-width:460px">
           <thead>
@@ -3944,7 +4066,7 @@ function renderEerrTable(rows) {
 
     const grandNeto = Object.values(totNeto).reduce((a,b)=>a+b,0);
 
-    content.innerHTML = `
+    content.innerHTML = ingresosHtml + `
       <div class="card" style="padding:0;overflow:auto;max-height:72vh">
         <table style="border-collapse:collapse;min-width:600px">
           <thead>
