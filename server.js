@@ -919,6 +919,56 @@ app.get('/api/compras/periodos', requireAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ─── PROMOCIONES ──────────────────────────────────────────────────────────────
+function calcularPromo(items, precioVenta) {
+  const costoTotal     = (items || []).reduce((s, i) => s + (parseFloat(i.costoUnitario) || 0) * (parseFloat(i.cantidad) || 1), 0);
+  const precioSeparado = (items || []).reduce((s, i) => s + (parseFloat(i.precioUnitario) || 0) * (parseFloat(i.cantidad) || 1), 0);
+  const pv = parseFloat(precioVenta) || 0;
+  const pvNeto = pv / 1.19;
+  const margen = pvNeto > 0 ? ((pvNeto - costoTotal) / pvNeto) * 100 : 0;
+  return { costoTotal, precioSeparado, margen };
+}
+
+app.get('/api/promociones', requireAuth, async (req, res) => {
+  try {
+    const snap = await col(req, 'promociones').orderBy('nombre').get();
+    res.json(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/promociones', requireAuth, async (req, res) => {
+  try {
+    const { nombre, precioVenta, items } = req.body;
+    const { costoTotal, precioSeparado, margen } = calcularPromo(items, precioVenta);
+    const ref = await col(req, 'promociones').add({
+      nombre: nombre?.trim(), precioVenta: parseFloat(precioVenta) || 0,
+      items: items || [], costoTotal, precioSeparado, margen,
+      creadoEn: TS(), actualizadoEn: TS()
+    });
+    res.json({ id: ref.id });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/promociones/:id', requireAuth, async (req, res) => {
+  try {
+    const { nombre, precioVenta, items } = req.body;
+    const { costoTotal, precioSeparado, margen } = calcularPromo(items, precioVenta);
+    await col(req, 'promociones').doc(req.params.id).update({
+      nombre: nombre?.trim(), precioVenta: parseFloat(precioVenta) || 0,
+      items: items || [], costoTotal, precioSeparado, margen,
+      actualizadoEn: TS()
+    });
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/promociones/:id', requireAuth, async (req, res) => {
+  try {
+    await col(req, 'promociones').doc(req.params.id).delete();
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── EERR INGRESOS ────────────────────────────────────────────────────────────
 app.get('/api/eerr-ingresos', requireAuth, async (req, res) => {
   try {

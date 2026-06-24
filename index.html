@@ -585,6 +585,9 @@
       <div class="nav-item" data-section="catMenu">
         <i class="bi bi-card-list"></i> Categorías de Carta
       </div>
+      <div class="nav-item" data-section="promociones">
+        <i class="bi bi-tags"></i> Promociones
+      </div>
       <div class="nav-item" data-section="gastos">
         <i class="bi bi-cash-stack"></i> Punto de Equilibrio
       </div>
@@ -1274,6 +1277,19 @@
         </div>
       </div>
 
+      <!-- ════════ PROMOCIONES ════════ -->
+      <div class="section" id="s-promociones">
+        <div class="section-header">
+          <div></div>
+          <button class="btn btn-primary" onclick="openPromoModal()">
+            <i class="bi bi-plus"></i> Nueva promoción
+          </button>
+        </div>
+        <div id="promociones-list">
+          <div class="loading-overlay"><div class="spinner spinner-dark"></div></div>
+        </div>
+      </div>
+
       <!-- ════════ EERR ════════ -->
       <div class="section" id="s-eerr">
         <div class="section-header">
@@ -1825,6 +1841,43 @@
 </div>
 
 <!-- Modal Gasto Fijo -->
+<!-- Modal Promoción -->
+<div class="modal-overlay" id="modal-promo">
+  <div class="modal-box" style="max-width:700px">
+    <div class="modal-header">
+      <h3 id="modal-promo-title">Nueva Promoción</h3>
+      <button class="btn-close-modal" onclick="closeModal('modal-promo')"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="promo-id" />
+      <div class="form-row" style="margin-bottom:14px">
+        <div class="form-group" style="flex:2;margin:0">
+          <label class="form-label">Nombre *</label>
+          <input type="text" id="promo-nombre" class="form-control" placeholder="Ej: Combo Pizza + Bebida" />
+        </div>
+        <div class="form-group" style="flex:1;margin:0">
+          <label class="form-label">Precio de venta *</label>
+          <input type="number" id="promo-precio" class="form-control" placeholder="0" min="0" oninput="recalcPromo()" />
+        </div>
+      </div>
+
+      <label class="form-label">Ítems de la promoción</label>
+      <div id="promo-items-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <button class="btn btn-outline btn-sm" onclick="addPromoItem('receta')"><i class="bi bi-plus"></i> Agregar receta</button>
+        <button class="btn btn-outline btn-sm" onclick="addPromoItem('preparacion')"><i class="bi bi-plus"></i> Agregar preparación</button>
+      </div>
+
+      <!-- Preview -->
+      <div id="promo-preview" style="background:#f8f9fa;border-radius:10px;padding:14px;font-size:13px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-promo')">Cancelar</button>
+      <button class="btn btn-primary" onclick="savePromo()">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-gasto">
   <div class="modal-box" style="max-width:680px">
     <div class="modal-header">
@@ -1890,6 +1943,7 @@ const state = {
   proveedores: [],
   stock: [],
   margenes: [],
+  recetas: [],
   preparaciones: [],
   categorias: [],
   unidades: [],
@@ -2095,6 +2149,7 @@ const sectionTitles = {
   inventarios: 'Inventarios',
   margenes: 'Márgenes',
   catMenu: 'Categorías de Carta',
+  promociones: 'Promociones',
   gastos: 'Gastos Fijos',
   eerr: 'Estado de Resultados',
   reuniones: 'Reuniones de Asesoría',
@@ -2120,6 +2175,7 @@ function navigate(section) {
   if (section === 'inventarios') { loadInventarios(); loadStock(); }
   if (section === 'margenes') loadMargenes();
   if (section === 'catMenu') loadCatMenu();
+  if (section === 'promociones') loadPromociones();
   if (section === 'gastos') loadGastos();
   if (section === 'eerr') loadEERR();
   if (section === 'reuniones') loadReuniones();
@@ -4495,6 +4551,200 @@ async function deleteGasto(id, nombre) {
     toast('Gasto eliminado');
     _gastosCache = [];
     await loadGastos();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════ PROMOCIONES ═════
+let _promoCache = [];
+
+async function loadPromociones() {
+  const wrap = document.getElementById('promociones-list');
+  wrap.innerHTML = '<div class="loading-overlay"><div class="spinner spinner-dark"></div></div>';
+  try {
+    const [promos, recetas, preps] = await Promise.all([
+      api('GET', '/promociones'),
+      api('GET', '/margenes'),
+      api('GET', '/preparaciones')
+    ]);
+    _promoCache = promos;
+    state.recetas    = recetas;
+    state.preparaciones = preps;
+    renderPromociones(promos);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function renderPromociones(list) {
+  const wrap = document.getElementById('promociones-list');
+  if (!list.length) {
+    wrap.innerHTML = '<div class="empty-state"><i class="bi bi-tags"></i><p>No hay promociones. Crea la primera.</p></div>';
+    return;
+  }
+  const fmt = n => '$' + Math.round(n).toLocaleString('es-CL');
+  const fmtPct = n => n.toFixed(1) + '%';
+  const marginColor = m => m >= 70 ? '#1a7a4a' : m >= 50 ? '#b45309' : '#b91c1c';
+  const marginBg    = m => m >= 70 ? '#f0fdf4' : m >= 50 ? '#fefce8' : '#fff5f5';
+
+  wrap.innerHTML = `
+    <div class="card" style="padding:0">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th style="text-align:right">Precio Promoción</th>
+              <th style="text-align:right">Precio por Separado</th>
+              <th style="text-align:right">Ahorro</th>
+              <th style="text-align:right">Costo</th>
+              <th style="text-align:right">Margen</th>
+              <th style="width:70px"></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${list.map(p => {
+              const pvNeto = (p.precioVenta || 0) / 1.19;
+              const costo  = p.costoTotal || 0;
+              const margen = pvNeto > 0 ? ((pvNeto - costo) / pvNeto) * 100 : 0;
+              const precioSep = p.precioSeparado || 0;
+              const ahorro    = precioSep - (p.precioVenta || 0);
+              return `<tr>
+                <td>
+                  <strong>${p.nombre}</strong>
+                  <div style="font-size:11px;color:var(--muted);margin-top:2px">
+                    ${(p.items||[]).map(i => `${i.cantidad > 1 ? i.cantidad+'× ' : ''}${i.nombre}`).join(' · ')}
+                  </div>
+                </td>
+                <td style="text-align:right;font-weight:600">${fmt(p.precioVenta)}</td>
+                <td style="text-align:right;color:var(--muted)">${precioSep ? fmt(precioSep) : '—'}</td>
+                <td style="text-align:right;color:#1a7a4a;font-weight:600">${ahorro > 0 ? fmt(ahorro) : '—'}</td>
+                <td style="text-align:right">${fmt(costo)}</td>
+                <td style="text-align:right">
+                  <span style="background:${marginBg(margen)};color:${marginColor(margen)};padding:3px 10px;border-radius:20px;font-weight:600;font-size:13px">${fmtPct(margen)}</span>
+                </td>
+                <td style="text-align:right">
+                  <button class="btn btn-outline btn-sm btn-icon" onclick="openPromoModal('${p.id}')" title="Editar"><i class="bi bi-pencil"></i></button>
+                  <button class="btn btn-outline btn-sm btn-icon" onclick="deletePromo('${p.id}','${p.nombre.replace(/'/g,"&#39;")}')" style="color:var(--danger);margin-left:4px" title="Eliminar"><i class="bi bi-trash"></i></button>
+                </td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function openPromoModal(id) {
+  const p = id ? _promoCache.find(x => x.id === id) : null;
+  document.getElementById('modal-promo-title').textContent = p ? 'Editar Promoción' : 'Nueva Promoción';
+  document.getElementById('promo-id').value = p?.id || '';
+  document.getElementById('promo-nombre').value = p?.nombre || '';
+  document.getElementById('promo-precio').value = p?.precioVenta || '';
+  document.getElementById('promo-items-list').innerHTML = '';
+  (p?.items || []).forEach(item => addPromoItem(item.tipo, item));
+  recalcPromo();
+  openModal('modal-promo');
+}
+
+function addPromoItem(tipo, data) {
+  const list = document.getElementById('promo-items-list');
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;align-items:center;gap:8px';
+  const source = tipo === 'receta' ? (state.recetas || []) : (state.preparaciones || []);
+  const options = source.map(x =>
+    `<option value="${x.id}" data-costo="${tipo === 'receta' ? x.costoPorcion : x.costoPorUnidad}" data-precio="${tipo === 'receta' ? x.precioVenta : 0}" data-nombre="${x.nombre.replace(/"/g,'&quot;')}"${data?.refId === x.id ? ' selected' : ''}>${x.nombre}</option>`
+  ).join('');
+  row.innerHTML = `
+    <span style="font-size:11px;font-weight:600;color:${tipo==='receta'?'#0ea5e9':'#9c27b0'};background:${tipo==='receta'?'rgba(14,165,233,0.1)':'rgba(156,39,176,0.1)'};padding:2px 8px;border-radius:12px;white-space:nowrap">${tipo === 'receta' ? 'Receta' : 'Preparación'}</span>
+    <select class="form-control promo-item-sel" data-tipo="${tipo}" style="flex:1" onchange="recalcPromo()">
+      <option value="">— Seleccionar —</option>
+      ${options}
+    </select>
+    <input type="number" class="form-control promo-item-cant" min="1" step="1" value="${data?.cantidad || 1}" style="width:70px" oninput="recalcPromo()" />
+    <button class="btn btn-outline btn-sm btn-icon" onclick="this.parentElement.remove();recalcPromo()" style="color:var(--danger)"><i class="bi bi-x"></i></button>`;
+  if (data?.refId) {
+    // pre-select
+    setTimeout(() => { const sel = row.querySelector('.promo-item-sel'); if (sel) { sel.value = data.refId; recalcPromo(); } }, 0);
+  }
+  list.appendChild(row);
+  recalcPromo();
+}
+
+function recalcPromo() {
+  const fmt = n => '$' + Math.round(n).toLocaleString('es-CL');
+  let costoTotal = 0, precioSeparado = 0, valid = true;
+  document.querySelectorAll('#promo-items-list > div').forEach(row => {
+    const sel  = row.querySelector('.promo-item-sel');
+    const cant = parseFloat(row.querySelector('.promo-item-cant')?.value) || 1;
+    const opt  = sel?.selectedOptions[0];
+    if (!opt?.value) { valid = false; return; }
+    costoTotal    += (parseFloat(opt.dataset.costo)   || 0) * cant;
+    precioSeparado += (parseFloat(opt.dataset.precio) || 0) * cant;
+  });
+  const pv     = parseFloat(document.getElementById('promo-precio')?.value) || 0;
+  const pvNeto = pv / 1.19;
+  const margen = pvNeto > 0 ? ((pvNeto - costoTotal) / pvNeto) * 100 : 0;
+  const ahorro = precioSeparado - pv;
+  const color  = margen >= 70 ? '#166534' : margen >= 50 ? '#92400e' : '#b91c1c';
+  document.getElementById('promo-preview').innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px">
+      <div style="background:#fff;border-radius:8px;padding:10px 12px;border:1px solid #e9ecef">
+        <div style="font-size:10px;color:#6c757d;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Costo total</div>
+        <div style="font-size:16px;font-weight:700;color:#212529">${fmt(costoTotal)}</div>
+      </div>
+      <div style="background:#fff;border-radius:8px;padding:10px 12px;border:1px solid #e9ecef">
+        <div style="font-size:10px;color:#6c757d;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Precio por separado</div>
+        <div style="font-size:16px;font-weight:700;color:#212529">${precioSeparado ? fmt(precioSeparado) : '—'}</div>
+      </div>
+      <div style="background:#fff;border-radius:8px;padding:10px 12px;border:1px solid #e9ecef">
+        <div style="font-size:10px;color:#6c757d;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Ahorro cliente</div>
+        <div style="font-size:16px;font-weight:700;color:#1a7a4a">${ahorro > 0 ? fmt(ahorro) : '—'}</div>
+      </div>
+      <div style="background:#fff;border-radius:8px;padding:10px 12px;border:1px solid #e9ecef">
+        <div style="font-size:10px;color:#6c757d;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Margen</div>
+        <div style="font-size:16px;font-weight:700;color:${color}">${pv ? margen.toFixed(1) + '%' : '—'}</div>
+      </div>
+    </div>`;
+}
+
+async function savePromo() {
+  const nombre = document.getElementById('promo-nombre').value.trim();
+  const pv     = parseFloat(document.getElementById('promo-precio').value) || 0;
+  if (!nombre) { toast('El nombre es requerido', 'error'); return; }
+  if (!pv)     { toast('El precio de venta es requerido', 'error'); return; }
+
+  const items = [];
+  let ok = true;
+  document.querySelectorAll('#promo-items-list > div').forEach(row => {
+    const sel  = row.querySelector('.promo-item-sel');
+    const tipo = sel?.dataset.tipo;
+    const cant = parseFloat(row.querySelector('.promo-item-cant')?.value) || 1;
+    const opt  = sel?.selectedOptions[0];
+    if (!opt?.value) { ok = false; return; }
+    items.push({
+      tipo, refId: opt.value, cantidad: cant,
+      nombre: opt.dataset.nombre || opt.text,
+      costoUnitario: parseFloat(opt.dataset.costo) || 0,
+      precioUnitario: parseFloat(opt.dataset.precio) || 0
+    });
+  });
+  if (!ok || !items.length) { toast('Agrega al menos un ítem válido', 'error'); return; }
+
+  const id = document.getElementById('promo-id').value;
+  const body = { nombre, precioVenta: pv, items };
+  try {
+    if (id) await api('PUT', '/promociones/' + id, body);
+    else     await api('POST', '/promociones', body);
+    closeModal('modal-promo');
+    await loadPromociones();
+    toast(id ? 'Promoción actualizada' : 'Promoción creada');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deletePromo(id, nombre) {
+  if (!confirm(`¿Eliminar "${nombre}"?`)) return;
+  try {
+    await api('DELETE', '/promociones/' + id);
+    toast('Promoción eliminada');
+    await loadPromociones();
   } catch (e) { toast(e.message, 'error'); }
 }
 
