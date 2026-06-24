@@ -213,6 +213,9 @@ app.post('/api/ingredientes/:id/precios', requireAuth, async (req, res) => {
       actualizadoEn: TS()
     });
 
+    // Cascade: update preparaciones y recetas que usan este ingrediente
+    await cascadeIngredienteCosto(req, req.params.id, costoFinal);
+
     res.json({ id: ref.id, costoUnitario });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -246,6 +249,9 @@ app.put('/api/ingredientes/:id/precios/:precioId', requireAuth, async (req, res)
       costo: costoFinal,
       actualizadoEn: TS()
     });
+
+    // Cascade: update preparaciones y recetas que usan este ingrediente
+    await cascadeIngredienteCosto(req, req.params.id, costoFinal);
 
     res.json({ ok: true, costoUnitario });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -525,6 +531,45 @@ app.delete('/api/inventarios/:id', requireAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ─── HELPERS CASCADA ──────────────────────────────────────────────────────────
+async function cascadeIngredienteCosto(req, ingredienteId, nuevoCosto) {
+  // Update preparaciones that use this ingredient
+  const prepsSnap = await col(req, 'preparaciones').get();
+  const batch1 = db.batch();
+  const prepUpdates = {}; // prepId → new costoPorUnidad
+  for (const doc of prepsSnap.docs) {
+    const prep = doc.data();
+    const ings = prep.ingredientes || [];
+    if (!ings.some(i => i.ingredienteId === ingredienteId)) continue;
+    const updatedIngs = ings.map(i => i.ingredienteId === ingredienteId ? { ...i, costoUnitario: nuevoCosto } : i);
+    const { costoTotal, costoPorUnidad } = calcularCostoPrep(updatedIngs, prep);
+    batch1.update(doc.ref, { ingredientes: updatedIngs, costoTotal, costoPorUnidad, actualizadoEn: TS() });
+    prepUpdates[doc.id] = costoPorUnidad;
+  }
+  await batch1.commit();
+
+  // Update margenes that use this ingredient directly OR the updated preparations
+  const margenesSnap = await col(req, 'margenes').get();
+  const batch2 = db.batch();
+  for (const doc of margenesSnap.docs) {
+    const receta = doc.data();
+    const ings = receta.ingredientes || [];
+    const affected = ings.some(i =>
+      (i.tipo !== 'preparacion' && i.ingredienteId === ingredienteId) ||
+      (i.tipo === 'preparacion' && prepUpdates[i.refId] !== undefined)
+    );
+    if (!affected) continue;
+    const updatedIngs = ings.map(i => {
+      if (i.tipo !== 'preparacion' && i.ingredienteId === ingredienteId) return { ...i, costoUnitario: nuevoCosto };
+      if (i.tipo === 'preparacion' && prepUpdates[i.refId] !== undefined) return { ...i, costoUnitario: prepUpdates[i.refId] };
+      return i;
+    });
+    const { costoTotal, costoPorcion, margen } = calcularMargen(updatedIngs, receta.porciones, receta.precioVenta);
+    batch2.update(doc.ref, { ingredientes: updatedIngs, costoTotal, costoPorcion, margen, actualizadoEn: TS() });
+  }
+  await batch2.commit();
+}
+
 // ─── MÁRGENES ─────────────────────────────────────────────────────────────────
 function calcularMargen(ingredientes, porciones, precioVenta) {
   const costoTotal = (ingredientes || []).reduce((sum, ing) => {
@@ -599,6 +644,25 @@ app.put('/api/preparaciones/:id', requireAuth, async (req, res) => {
       tieneMerma: !!tieneMerma, merma: parseFloat(merma) || 0,
       notas: notas || '', actualizadoEn: TS()
     });
+
+    // Cascade: update all recetas (margenes) that use this preparation
+    const margenesSnap = await col(req, 'margenes').get();
+    const batch = db.batch();
+    for (const doc of margenesSnap.docs) {
+      const receta = doc.data();
+      const ings = receta.ingredientes || [];
+      const hasPrep = ings.some(i => i.tipo === 'preparacion' && i.refId === req.params.id);
+      if (!hasPrep) continue;
+      const updatedIngs = ings.map(i =>
+        (i.tipo === 'preparacion' && i.refId === req.params.id)
+          ? { ...i, costoUnitario: costoPorUnidad }
+          : i
+      );
+      const { costoTotal: ct, costoPorcion: cp, margen: mg } = calcularMargen(updatedIngs, receta.porciones, receta.precioVenta);
+      batch.update(doc.ref, { ingredientes: updatedIngs, costoTotal: ct, costoPorcion: cp, margen: mg, actualizadoEn: TS() });
+    }
+    await batch.commit();
+
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
