@@ -218,6 +218,10 @@
     td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: #fafbfc; }
+    /* Lista compacta de recetas */
+    #recetas-list-table td { padding: 7px 14px; border-bottom: 1px solid #f1f5f9; }
+    #recetas-list-table th { padding: 8px 14px; border-bottom: 1px solid #f1f5f9; }
+    #recetas-list-table tr:hover td { background: #f8fafc; }
 
     /* ── Buttons ────────────────────────────────────────────────────────── */
     .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 0.86rem; font-weight: 700; cursor: pointer; border: none; transition: all 0.15s; }
@@ -464,6 +468,14 @@
     .drw-cost-label { color: var(--muted); font-weight: 600; }
     .drw-cost-val { font-weight: 800; font-size: 1rem; }
 
+    /* ── Canales delivery ───────────────────────────────────────────────── */
+    .drw-channel-tab { padding: 5px 14px; border-radius: 20px; border: 1.5px solid var(--border); background: transparent; cursor: pointer; font-size: 0.82rem; font-weight: 600; color: var(--text); transition: all 0.15s; white-space: nowrap; }
+    .drw-channel-tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .drw-canal-base-ing { display: flex; justify-content: space-between; align-items: center; padding: 5px 10px; border-radius: 6px; background: var(--surface); font-size: 0.8rem; color: var(--muted); margin-bottom: 3px; }
+    .plt-tag { display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; font-size: 0.88rem; }
+    .plt-comision-badge { background: #e3f2fd; color: #1565c0; border-radius: 20px; padding: 2px 8px; font-size: 0.78rem; font-weight: 700; }
+    .canal-mrg-chip { font-size: 0.71rem; padding: 2px 7px; border-radius: 12px; font-weight: 700; background: var(--surface); border: 1px solid var(--border); white-space: nowrap; }
+
     /* ── Responsive ─────────────────────────────────────────────────────── */
     @media (max-width: 768px) {
       .sidebar { transform: translateX(-100%); }
@@ -691,9 +703,14 @@
         <div id="ing-list-view">
           <div class="section-header">
             <h2>Ingredientes</h2>
-            <button class="btn btn-primary" onclick="openIngEdit()">
-              <i class="bi bi-plus"></i> Nuevo ingrediente
-            </button>
+            <div style="display:flex;gap:10px;align-items:center">
+              <button class="btn btn-outline" onclick="previewIngredientesPDF()">
+                <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
+              </button>
+              <button class="btn btn-primary" onclick="openIngEdit()">
+                <i class="bi bi-plus"></i> Nuevo ingrediente
+              </button>
+            </div>
           </div>
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px">
             <div class="search-box">
@@ -1033,12 +1050,6 @@
                 <i class="bi bi-search"></i>
                 <input type="text" id="mrg-search" placeholder="Buscar receta..." oninput="filterRecetas()" />
               </div>
-              <select class="form-control" id="mrg-filter-tipo" style="width:auto;padding:8px 12px" onchange="onFilterTipoChange()">
-                <option value="">Todos los tipos</option>
-                <option value="Alimentos">Alimentos</option>
-                <option value="Bebestibles">Bebestibles</option>
-                <option value="Desechables">Desechables</option>
-              </select>
               <select class="form-control" id="mrg-filter-cat" style="width:auto;padding:8px 12px" onchange="filterRecetas()">
                 <option value="">Todas las subcategorías</option>
               </select>
@@ -1048,6 +1059,9 @@
                 <option value="mid">50% – 70%</option>
                 <option value="low">Bajo 50%</option>
               </select>
+              <button class="btn btn-outline btn-sm" id="mrg-inactivos-btn" onclick="toggleMrgInactivos()" title="Ver inactivos" style="display:flex;align-items:center;gap:5px">
+                <i class="bi bi-eye-slash"></i> Inactivos
+              </button>
               <div class="cols-btn-group">
                 <button class="cols-btn active" id="col-btn-3" onclick="setMrgCols(3)">3</button>
                 <button class="cols-btn" id="col-btn-4" onclick="setMrgCols(4)">4</button>
@@ -1055,9 +1069,14 @@
                 <button class="cols-btn" id="col-btn-list" onclick="setMrgCols('list')" title="Vista lista"><i class="bi bi-list-ul"></i></button>
               </div>
             </div>
-            <button class="btn btn-primary" onclick="openRecetaDrawer()">
-              <i class="bi bi-plus"></i> Agregar receta
-            </button>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-outline" onclick="previewMargenesPDF()">
+                <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
+              </button>
+              <button class="btn btn-primary" onclick="openRecetaDrawer()">
+                <i class="bi bi-plus"></i> Agregar receta
+              </button>
+            </div>
           </div>
           <div class="stats-row" style="margin-bottom:16px">
             <div class="stat-card"><div class="stat-label">Total recetas</div><div class="stat-value" id="stat-recetas">—</div></div>
@@ -1280,10 +1299,18 @@
       <!-- ════════ PROMOCIONES ════════ -->
       <div class="section" id="s-promociones">
         <div class="section-header">
-          <div></div>
-          <button class="btn btn-primary" onclick="openPromoModal()">
-            <i class="bi bi-plus"></i> Nueva promoción
-          </button>
+          <h2>Promociones</h2>
+          <div style="display:flex;gap:10px;align-items:center">
+            <button class="btn btn-outline btn-sm" id="promo-inactivas-btn" onclick="togglePromoInactivas()" title="Ver inactivas" style="display:flex;align-items:center;gap:5px">
+              <i class="bi bi-eye-slash"></i> Inactivas
+            </button>
+            <button class="btn btn-outline" onclick="loadPromociones()" title="Recargar costos">
+              <i class="bi bi-arrow-clockwise"></i> Recargar
+            </button>
+            <button class="btn btn-primary" onclick="openPromoModal()">
+              <i class="bi bi-plus"></i> Nueva promoción
+            </button>
+          </div>
         </div>
         <div id="promociones-list">
           <div class="loading-overlay"><div class="spinner spinner-dark"></div></div>
@@ -1390,6 +1417,29 @@
             </div>
           </div>
 
+          <!-- Plataformas de Delivery -->
+          <div class="card" style="grid-column:1/-1">
+            <div class="card-body">
+              <h5 style="font-weight:800;margin-bottom:4px;font-size:0.95rem;display:flex;align-items:center;gap:8px">
+                <i class="bi bi-truck" style="color:var(--primary)"></i> Plataformas de Delivery
+              </h5>
+              <p style="font-size:0.8rem;color:var(--muted);margin-bottom:14px">
+                Agrega las plataformas que usas con su comisión (% sobre precio de venta). Se usarán para calcular el margen real por canal en cada receta.
+              </p>
+              <div id="plataformas-delivery-list" style="margin-bottom:12px"></div>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <input type="text" id="plt-new-nombre" class="form-control" placeholder="Ej: Rappi" style="max-width:180px" />
+                <div style="display:flex;align-items:center;gap:4px">
+                  <input type="number" id="plt-new-comision" class="form-control" placeholder="0" min="0" max="100" step="0.5" style="max-width:90px" />
+                  <span style="color:var(--muted);font-size:0.9rem">%</span>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="addPlataformaDelivery()">
+                  <i class="bi bi-plus"></i> Agregar
+                </button>
+              </div>
+            </div>
+          </div>
+
           <!-- Contacto -->
           <div class="card">
             <div class="card-body">
@@ -1476,6 +1526,39 @@
 </div>
 
 <!-- Modal Categoría -->
+<!-- ════ MODAL EXPORT INGREDIENTES PDF ════ -->
+<div class="modal-overlay" id="modal-export-ing">
+  <div class="modal-box" style="max-width:860px;width:95vw;height:90vh;display:flex;flex-direction:column">
+    <div class="modal-header" style="flex-shrink:0">
+      <h3>Vista previa — Ingredientes</h3>
+      <button class="btn-close-modal" onclick="closeModal('modal-export-ing')"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div id="ing-pdf-preview" style="flex:1;overflow-y:auto;padding:24px;background:#f5f5f5;border-radius:8px;margin:16px 0"></div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;flex-shrink:0;padding-top:8px;border-top:1px solid var(--border)">
+      <button class="btn btn-outline" onclick="closeModal('modal-export-ing')">Cerrar</button>
+      <button class="btn btn-primary" onclick="downloadIngredientesPDF()">
+        <i class="bi bi-download"></i> Descargar PDF
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-export-mrg">
+  <div class="modal-box" style="max-width:920px;width:95vw;height:90vh;display:flex;flex-direction:column">
+    <div class="modal-header" style="flex-shrink:0">
+      <h3>Vista previa — Informe de Márgenes</h3>
+      <button class="btn-close-modal" onclick="closeModal('modal-export-mrg')"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div id="mrg-pdf-preview" style="flex:1;overflow-y:auto;padding:0;background:#f5f5f5;border-radius:8px;margin:16px 0"></div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;flex-shrink:0;padding-top:8px;border-top:1px solid var(--border)">
+      <button class="btn btn-outline" onclick="closeModal('modal-export-mrg')">Cerrar</button>
+      <button class="btn btn-primary" onclick="downloadMargenesPDF()">
+        <i class="bi bi-download"></i> Descargar PDF
+      </button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-cat">
   <div class="modal-box" style="max-width:400px">
     <div class="modal-header">
@@ -1594,10 +1677,6 @@
       <input type="text" id="drw-r-nombre" class="form-control" placeholder="Ej: Pasta alfredo" />
     </div>
     <div class="form-group">
-      <label class="form-label">Método / Subcategoría</label>
-      <input type="text" id="drw-r-metodo" class="form-control" placeholder="— Sin método —" />
-    </div>
-    <div class="form-group">
       <label class="form-label">Sección de Carta</label>
       <select id="drw-r-cat-menu" class="form-control">
         <option value="">— Sin sección —</option>
@@ -1614,37 +1693,43 @@
       </div>
     </div>
 
-    <!-- Ingredientes -->
-    <div class="form-group">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <label class="form-label" style="margin:0">Ingredientes</label>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-outline btn-sm" onclick="addDrwIngRow('ingrediente')">
-            <i class="bi bi-plus"></i> Ingrediente
-          </button>
-          <button class="btn btn-outline btn-sm" style="color:#9c27b0;border-color:#9c27b0" onclick="addDrwIngRow('preparacion')">
-            <i class="bi bi-plus"></i> Preparación
-          </button>
+    <!-- Canal tabs bar -->
+    <div id="drw-r-channel-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px"></div>
+
+    <!-- GENÉRICO tab -->
+    <div id="drw-tab-generico">
+      <div class="form-group">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <label class="form-label" style="margin:0">Ingredientes</label>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-outline btn-sm" onclick="addDrwIngRow('ingrediente')">
+              <i class="bi bi-plus"></i> Ingrediente
+            </button>
+            <button class="btn btn-outline btn-sm" style="color:#9c27b0;border-color:#9c27b0" onclick="addDrwIngRow('preparacion')">
+              <i class="bi bi-plus"></i> Preparación
+            </button>
+          </div>
+        </div>
+        <div id="drw-r-ing-list"></div>
+      </div>
+      <div class="drw-cost-box">
+        <div class="drw-cost-row">
+          <span class="drw-cost-label">Costo total</span>
+          <span class="drw-cost-val" id="drw-r-costo-total">$0</span>
+        </div>
+        <div class="drw-cost-row">
+          <span class="drw-cost-label">Costo por porción</span>
+          <span class="drw-cost-val" id="drw-r-costo-porcion">$0</span>
+        </div>
+        <div class="drw-cost-row" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+          <span class="drw-cost-label" style="font-size:0.95rem">Margen genérico</span>
+          <span class="drw-cost-val" style="font-size:1.2rem" id="drw-r-margen">—%</span>
         </div>
       </div>
-      <div id="drw-r-ing-list"></div>
     </div>
 
-    <!-- Costos calculados -->
-    <div class="drw-cost-box">
-      <div class="drw-cost-row">
-        <span class="drw-cost-label">Costo total</span>
-        <span class="drw-cost-val" id="drw-r-costo-total">$0</span>
-      </div>
-      <div class="drw-cost-row">
-        <span class="drw-cost-label">Costo por porción</span>
-        <span class="drw-cost-val" id="drw-r-costo-porcion">$0</span>
-      </div>
-      <div class="drw-cost-row" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
-        <span class="drw-cost-label" style="font-size:0.95rem">Margen</span>
-        <span class="drw-cost-val" style="font-size:1.2rem" id="drw-r-margen">—%</span>
-      </div>
-    </div>
+    <!-- Platform tabs content (generated dynamically) -->
+    <div id="drw-platform-tabs-content"></div>
 
     <div class="form-group" style="margin-top:16px">
       <label class="form-label">Notas</label>
@@ -1868,8 +1953,16 @@
         <button class="btn btn-outline btn-sm" onclick="addPromoItem('preparacion')"><i class="bi bi-plus"></i> Agregar preparación</button>
       </div>
 
-      <!-- Preview -->
-      <div id="promo-preview" style="background:#f8f9fa;border-radius:10px;padding:14px;font-size:13px"></div>
+      <!-- Channel tabs (shown when platforms exist) -->
+      <div id="promo-channel-tabs-bar" style="display:none;border-bottom:2px solid #e9ecef;margin-bottom:14px;display:flex;gap:4px;overflow-x:auto"></div>
+
+      <!-- Genérico tab content -->
+      <div id="promo-tab-generico">
+        <div id="promo-preview" style="background:#f8f9fa;border-radius:10px;padding:14px;font-size:13px"></div>
+      </div>
+
+      <!-- Platform tabs content -->
+      <div id="promo-platform-tabs-content"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modal-promo')">Cancelar</button>
@@ -1951,7 +2044,8 @@ const state = {
   alertas: [],
   inventarios: [],
   categoriasMenu: [],
-  alertasFilter: false
+  alertasFilter: false,
+  plataformasDelivery: []
 };
 
 let currentSection = 'ingredientes';
@@ -2522,6 +2616,519 @@ function renderIngredientes(list) {
     </tr>`;
   }).join('');
 }
+
+// ── Export PDF Ingredientes ────────────────────────────────────────────────────
+function buildIngredientesHTML(forPrint = false) {
+  const ings = [...state.ingredientes].sort((a, b) => {
+    const catA = a.categoria || 'ZZZ';
+    const catB = b.categoria || 'ZZZ';
+    if (catA !== catB) return catA.localeCompare(catB, 'es');
+    return a.nombre.localeCompare(b.nombre, 'es');
+  });
+
+  const grupos = {};
+  ings.forEach(i => {
+    const cat = i.categoria || 'Sin categoría';
+    if (!grupos[cat]) grupos[cat] = [];
+    grupos[cat].push(i);
+  });
+
+  const clienteNombre = document.getElementById('cliente-select')?.selectedOptions[0]?.text || 'Cliente';
+  const fecha = new Date().toLocaleDateString('es-CL', { day:'2-digit', month:'long', year:'numeric' });
+
+  const categoriaRows = Object.entries(grupos).map(([cat, items]) => `
+    <tr class="cat-header-row">
+      <td colspan="5" class="cat-header">${cat} <span class="cat-count">${items.length} ítems</span></td>
+    </tr>
+    ${items.map((i, idx) => `
+    <tr class="${idx % 2 === 0 ? 'row-par' : 'row-impar'}">
+      <td class="td-sku">${i.sku || '—'}</td>
+      <td class="td-nombre">${i.nombre}</td>
+      <td class="td-center">${i.unidad || '—'}</td>
+      <td class="td-right">$${Math.round(i.costo).toLocaleString('es-CL')}</td>
+      <td class="td-center td-activo">${i.activo !== false ? '✓' : '✗'}</td>
+    </tr>`).join('')}
+  `).join('');
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 9.5pt; color: #1a1a1a; background:#fff; }
+  .page { padding: ${forPrint ? '12mm 14mm' : '28px 32px'}; }
+  .doc-header { display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:20px; padding-bottom:12px; border-bottom:3px solid #c0392b; }
+  .doc-title { font-size:20pt; font-weight:800; color:#c0392b; letter-spacing:1px; }
+  .doc-sub { font-size:9pt; color:#666; margin-top:3px; }
+  .doc-meta { text-align:right; font-size:8.5pt; color:#666; }
+  .doc-meta strong { color:#1a1a1a; }
+  table { width:100%; border-collapse:collapse; margin-top:8px; }
+  .cat-header-row td { padding:0; }
+  .cat-header { background:#c0392b; color:#fff; font-weight:700; font-size:9pt; letter-spacing:1px; text-transform:uppercase; padding:6px 10px; }
+  .cat-count { font-weight:400; font-size:8pt; opacity:0.8; margin-left:6px; }
+  tr.row-par td { background:#fff; padding:5px 10px; }
+  tr.row-impar td { background:#fdf6f5; padding:5px 10px; }
+  tr.row-par td, tr.row-impar td { border-bottom:1px solid #f0e0de; }
+  .td-sku { font-size:8pt; color:#888; width:90px; font-family:monospace; }
+  .td-nombre { font-weight:600; }
+  .td-center { text-align:center; width:70px; color:#555; }
+  .td-right { text-align:right; width:90px; font-weight:700; color:#c0392b; }
+  .td-activo { color:#1a7a4a; font-size:11pt; }
+  .doc-footer { margin-top:16px; padding-top:8px; border-top:1px solid #eee; text-align:center; font-size:7.5pt; color:#aaa; }
+  .total-badge { display:inline-block; background:#1a1a1a; color:#fff; border-radius:4px; padding:2px 8px; font-size:8pt; margin-bottom:10px; }
+  @media print {
+    @page { size:A4; margin:12mm 14mm; }
+    body { font-size:9pt; }
+    .page { padding:0; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="doc-header">
+    <div>
+      <div class="doc-title">${clienteNombre}</div>
+      <div class="doc-sub">Maestro de Ingredientes</div>
+    </div>
+    <div class="doc-meta">
+      <div><strong>Fecha:</strong> ${fecha}</div>
+      <div><strong>Total:</strong> ${ings.length} ingredientes</div>
+    </div>
+  </div>
+  <div><span class="total-badge">${Object.keys(grupos).length} categorías · ${ings.length} ingredientes</span></div>
+  <table>
+    <thead>
+      <tr style="background:#f5f5f5">
+        <th style="padding:6px 10px;text-align:left;font-size:8pt;color:#666;border-bottom:2px solid #ddd">SKU</th>
+        <th style="padding:6px 10px;text-align:left;font-size:8pt;color:#666;border-bottom:2px solid #ddd">Nombre</th>
+        <th style="padding:6px 10px;text-align:center;font-size:8pt;color:#666;border-bottom:2px solid #ddd">Unidad</th>
+        <th style="padding:6px 10px;text-align:right;font-size:8pt;color:#666;border-bottom:2px solid #ddd">Costo</th>
+        <th style="padding:6px 10px;text-align:center;font-size:8pt;color:#666;border-bottom:2px solid #ddd">Activo</th>
+      </tr>
+    </thead>
+    <tbody>${categoriaRows}</tbody>
+  </table>
+  <div class="doc-footer">Generado por AsesoriasRestaurantes · ${fecha}</div>
+</div>
+</body>
+</html>`;
+}
+
+function previewIngredientesPDF() {
+  if (!state.ingredientes?.length) { toast('No hay ingredientes cargados', 'error'); return; }
+  const html = buildIngredientesHTML(false);
+  const preview = document.getElementById('ing-pdf-preview');
+  preview.innerHTML = '';
+  const iframe = document.createElement('iframe');
+  iframe.style.cssText = 'width:100%;height:100%;min-height:500px;border:none;border-radius:6px;background:#fff';
+  preview.style.padding = '0';
+  preview.appendChild(iframe);
+  iframe.contentDocument.open();
+  iframe.contentDocument.write(html);
+  iframe.contentDocument.close();
+  openModal('modal-export-ing');
+}
+
+function downloadIngredientesPDF() {
+  const html = buildIngredientesHTML(true);
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const win  = window.open(url, '_blank');
+  if (win) {
+    win.onload = () => { win.focus(); win.print(); };
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+function buildMargenesHTML(forPrint = false) {
+  const fmt  = n => '$' + Math.round(n).toLocaleString('es-CL');
+  const fmtN = n => n.toFixed(1) + '%';
+
+  const activos = state.margenes.filter(m => m.activo !== false);
+  const sorted = [...activos].sort((a, b) => {
+    const cA = a.categoriaMenu || 'ZZZ';
+    const cB = b.categoriaMenu || 'ZZZ';
+    if (cA !== cB) return cA.localeCompare(cB, 'es');
+    return a.nombre.localeCompare(b.nombre, 'es');
+  });
+
+  const grupos = {};
+  sorted.forEach(m => {
+    const cat = m.categoriaMenu || 'Sin categoría';
+    if (!grupos[cat]) grupos[cat] = [];
+    grupos[cat].push(m);
+  });
+
+  const plataformas = state.plataformasDelivery || [];
+  const clienteNombre = document.getElementById('cliente-select')?.selectedOptions[0]?.text || 'Cliente';
+  const fecha = new Date().toLocaleDateString('es-CL', { day:'2-digit', month:'long', year:'numeric' });
+  const avgMrg = activos.length ? activos.reduce((s, m) => s + (m.margen || 0), 0) / activos.length : 0;
+
+  const mColor = p => p >= 70 ? '#1a7a4a' : p >= 50 ? '#b45309' : '#c53030';
+  const mBg    = p => p >= 70 ? '#f0fdf4' : p >= 50 ? '#fefce8' : '#fff5f5';
+  const mBorder= p => p >= 70 ? '#bbf7d0' : p >= 50 ? '#fde68a' : '#fecaca';
+
+  // ── RESUMEN: tabla por categoría ─────────────────────────────────────────
+  const plataformaHeaders = plataformas.map(p =>
+    `<th style="padding:6px 8px;text-align:right;font-size:7.5pt;color:#666;border-bottom:2px solid #ddd;white-space:nowrap">${p.nombre}</th>`
+  ).join('');
+
+  const categoriaRows = Object.entries(grupos).map(([cat, items]) => `
+    <tr>
+      <td colspan="${5 + plataformas.length}" style="background:#c0392b;color:#fff;font-weight:700;font-size:8.5pt;letter-spacing:0.8px;text-transform:uppercase;padding:6px 10px">
+        ${cat} <span style="font-weight:400;font-size:7.5pt;opacity:0.8;margin-left:6px">${items.length} productos</span>
+      </td>
+    </tr>
+    ${items.map((m, idx) => {
+      const mp = parseFloat(m.margen) || 0;
+      const canalesHtml = plataformas.map(p => {
+        const c = m.canales?.[p.id];
+        if (!c) return `<td style="text-align:right;padding:5px 8px;color:#bbb;font-size:8pt">—</td>`;
+        const mc = parseFloat(c.margenCanal) || 0;
+        const pvCanal = c.precioVenta ? `<div style="font-size:6.5pt;color:#888">${fmt(c.precioVenta)}</div>` : '';
+        return `<td style="text-align:right;padding:5px 8px">${pvCanal}<span style="background:${mBg(mc)};color:${mColor(mc)};padding:2px 6px;border-radius:10px;font-size:7.5pt;font-weight:700">${fmtN(mc)}</span></td>`;
+      }).join('');
+      return `<tr style="background:${idx % 2 === 0 ? '#fff' : '#fdf6f5'}">
+        <td style="padding:5px 10px;font-weight:600;font-size:8.5pt">${m.nombre}</td>
+        <td style="padding:5px 8px;text-align:right;font-size:8.5pt">${fmt(m.costoPorcion || 0)}</td>
+        <td style="padding:5px 8px;text-align:right;font-size:8.5pt">${fmt(m.precioVenta || 0)}</td>
+        <td style="padding:5px 8px;text-align:right"><span style="background:${mBg(mp)};color:${mColor(mp)};padding:2px 8px;border-radius:10px;font-size:8pt;font-weight:700">${fmtN(mp)}</span></td>
+        <td style="padding:5px 8px;text-align:center;font-size:8pt;color:#888">${(m.ingredientes||[]).length}</td>
+        ${canalesHtml}
+      </tr>`;
+    }).join('')}
+  `).join('');
+
+  // ── RESUMEN: Promociones ─────────────────────────────────────────────────
+  const promos = (_promoCache || []).filter(p => p.activo !== false);
+  const avgMrgPromo = promos.length ? promos.reduce((s, p) => {
+    const pvNeto = (p.precioVenta || 0) / 1.19;
+    const costo = p.costoTotal || 0;
+    return s + (pvNeto > 0 ? ((pvNeto - costo) / pvNeto) * 100 : 0);
+  }, 0) / promos.length : 0;
+
+  const promoSummaryRows = promos.map((p, idx) => {
+    const pvNeto = (p.precioVenta || 0) / 1.19;
+    const costo = p.costoTotal || 0;
+    const mp = pvNeto > 0 ? ((pvNeto - costo) / pvNeto) * 100 : 0;
+    const precioSep = (p.items || []).reduce((s, i) => s + (i.precioUnitario || 0) * (i.cantidad || 1), 0);
+    const ahorro = precioSep - (p.precioVenta || 0);
+    const canalesHtml = plataformas.map(plt => {
+      const c = p.canales?.[plt.id];
+      if (!c) return `<td style="text-align:right;padding:5px 8px;color:#bbb;font-size:8pt">—</td>`;
+      const mc = parseFloat(c.margenCanal) || 0;
+      const pvCanal = c.precioVenta ? `<div style="font-size:6.5pt;color:#888">${fmt(c.precioVenta)}</div>` : '';
+      return `<td style="text-align:right;padding:5px 8px">${pvCanal}<span style="background:${mBg(mc)};color:${mColor(mc)};padding:2px 6px;border-radius:10px;font-size:7.5pt;font-weight:700">${fmtN(mc)}</span></td>`;
+    }).join('');
+    return `<tr style="background:${idx % 2 === 0 ? '#fff' : '#f5f0fd'}">
+      <td style="padding:5px 10px;font-weight:600;font-size:8.5pt">${p.nombre}
+        <div style="font-size:7pt;color:#888;margin-top:1px">${(p.items||[]).map(i=>`${i.cantidad>1?i.cantidad+'× ':''}${i.nombre}`).join(' · ')}</div>
+      </td>
+      <td style="padding:5px 8px;text-align:right;font-size:8.5pt">${fmt(costo)}</td>
+      <td style="padding:5px 8px;text-align:right;font-size:8.5pt">${fmt(p.precioVenta || 0)}</td>
+      <td style="padding:5px 8px;text-align:right;font-size:8.5pt;color:#666">${precioSep ? fmt(precioSep) : '—'}</td>
+      <td style="padding:5px 8px;text-align:right;font-size:8.5pt;color:#1a7a4a;font-weight:600">${ahorro > 0 ? fmt(ahorro) : '—'}</td>
+      <td style="padding:5px 8px;text-align:right"><span style="background:${mBg(mp)};color:${mColor(mp)};padding:2px 8px;border-radius:10px;font-size:8pt;font-weight:700">${fmtN(mp)}</span></td>
+      ${canalesHtml}
+    </tr>`;
+  }).join('');
+
+  const promoSummarySection = promos.length ? `
+  <div style="margin-top:28px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px;padding-bottom:6px;border-bottom:3px solid #7c3aed">
+      <div style="font-size:13pt;font-weight:800;color:#7c3aed">Promociones</div>
+      <div style="font-size:8pt;color:#666">${promos.length} activas · Margen promedio ${fmtN(avgMrgPromo)}</div>
+    </div>
+    <table>
+      <thead><tr>
+        <th style="padding:6px 10px;text-align:left;font-size:7.5pt;color:#666;border-bottom:2px solid #ddd">Promoción</th>
+        <th style="padding:6px 8px;text-align:right;font-size:7.5pt;color:#666;border-bottom:2px solid #ddd">Costo</th>
+        <th style="padding:6px 8px;text-align:right;font-size:7.5pt;color:#666;border-bottom:2px solid #ddd">Precio Promo</th>
+        <th style="padding:6px 8px;text-align:right;font-size:7.5pt;color:#666;border-bottom:2px solid #ddd">Por separado</th>
+        <th style="padding:6px 8px;text-align:right;font-size:7.5pt;color:#666;border-bottom:2px solid #ddd">Ahorro</th>
+        <th style="padding:6px 8px;text-align:right;font-size:7.5pt;color:#666;border-bottom:2px solid #ddd">Margen</th>
+        ${plataformas.map(p=>`<th style="padding:6px 8px;text-align:right;font-size:7.5pt;color:#666;border-bottom:2px solid #ddd;white-space:nowrap">${p.nombre}</th>`).join('')}
+      </tr></thead>
+      <tbody>${promoSummaryRows}</tbody>
+    </table>
+  </div>` : '';
+
+  // ── DETALLE: cards por receta ─────────────────────────────────────────────
+  const detailCards = Object.entries(grupos).map(([cat, items]) => `
+    <div style="margin-bottom:20px;page-break-inside:avoid">
+      <div style="background:#c0392b;color:#fff;font-weight:700;font-size:9pt;letter-spacing:0.8px;text-transform:uppercase;padding:7px 12px;border-radius:6px 6px 0 0;margin-bottom:2px">
+        ${cat}
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:10px;background:#fafafa;border:1px solid #e5e7eb;border-radius:0 0 6px 6px">
+        ${items.map(m => {
+          const mp = parseFloat(m.margen) || 0;
+          const ings = (m.ingredientes || []);
+          const costoIng = ings.reduce((s, i) => s + (i.costoUnitario || 0) * (i.cantidad || 0), 0);
+          const porciones = m.porciones || 1;
+
+          const ingRows = ings.map((i, ii) => {
+            const subtotal = (i.costoUnitario || 0) * (i.cantidad || 0);
+            return `<tr style="background:${ii%2===0?'#fff':'#f9fafb'}">
+              <td style="padding:3px 6px;font-size:7pt">${i.nombre || '—'}</td>
+              <td style="padding:3px 6px;text-align:right;font-size:7pt;color:#555">${i.cantidad} ${i.unidad || ''}</td>
+              <td style="padding:3px 6px;text-align:right;font-size:7pt;color:#555">${fmt(i.costoUnitario || 0)}</td>
+              <td style="padding:3px 6px;text-align:right;font-size:7pt;font-weight:600">${fmt(subtotal)}</td>
+            </tr>`;
+          }).join('');
+
+          const canalRows = plataformas.map(p => {
+            const c = m.canales?.[p.id];
+            if (!c) return '';
+            const mc = parseFloat(c.margenCanal) || 0;
+            const pvCanal = c.precioVenta || m.precioVenta || 0;
+            return `<tr>
+              <td style="padding:3px 8px;font-size:7.5pt;font-weight:600;color:#0369a1">🚚 ${c.nombre}</td>
+              <td style="padding:3px 6px;text-align:right;font-size:7.5pt">${fmt(pvCanal)}</td>
+              <td style="padding:3px 6px;text-align:right;font-size:7pt;color:#dc3545">${fmt(c.costoComision || 0)}</td>
+              <td style="padding:3px 6px;text-align:right;font-size:7pt">${fmt(c.costoTotalCanal || 0)}</td>
+              <td style="padding:3px 6px;text-align:right"><span style="background:${mBg(mc)};color:${mColor(mc)};padding:1px 5px;border-radius:8px;font-size:7pt;font-weight:700">${fmtN(mc)}</span></td>
+            </tr>`;
+          }).filter(Boolean).join('');
+
+          return `<div style="background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:10px;page-break-inside:avoid">
+            <!-- card header -->
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #f0f0f0">
+              <div>
+                <div style="font-size:9.5pt;font-weight:800;color:#1a1a1a">${m.nombre}</div>
+                ${porciones > 1 ? `<div style="font-size:7pt;color:#888;margin-top:1px">${porciones} porciones · costo por porción ${fmt(m.costoPorcion||0)}</div>` : ''}
+              </div>
+              <div style="text-align:right">
+                <div style="font-size:10pt;font-weight:800;color:#1a1a1a">${fmt(m.precioVenta||0)}</div>
+                <span style="background:${mBg(mp)};color:${mColor(mp)};border:1px solid ${mBorder(mp)};padding:2px 8px;border-radius:10px;font-size:8pt;font-weight:700">${fmtN(mp)}</span>
+              </div>
+            </div>
+            <!-- ingredientes -->
+            ${ings.length ? `
+            <div style="font-size:7pt;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Ingredientes</div>
+            <table style="width:100%;border-collapse:collapse;margin-bottom:6px">
+              <thead><tr style="background:#f5f5f5">
+                <th style="padding:2px 6px;text-align:left;font-size:6.5pt;color:#666">Nombre</th>
+                <th style="padding:2px 6px;text-align:right;font-size:6.5pt;color:#666">Cantidad</th>
+                <th style="padding:2px 6px;text-align:right;font-size:6.5pt;color:#666">Precio unit.</th>
+                <th style="padding:2px 6px;text-align:right;font-size:6.5pt;color:#666">Subtotal</th>
+              </tr></thead>
+              <tbody>${ingRows}</tbody>
+              <tfoot><tr style="background:#f8f9fa;border-top:1px solid #ddd">
+                <td colspan="3" style="padding:3px 6px;font-size:7pt;font-weight:700;text-align:right;color:#555">Costo total ingredientes:</td>
+                <td style="padding:3px 6px;text-align:right;font-size:7.5pt;font-weight:800">${fmt(costoIng)}</td>
+              </tr></tfoot>
+            </table>` : '<div style="font-size:7pt;color:#bbb;margin-bottom:6px">Sin ingredientes</div>'}
+            <!-- canales delivery -->
+            ${canalRows ? `
+            <div style="font-size:7pt;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;margin-top:4px">Delivery</div>
+            <table style="width:100%;border-collapse:collapse;background:#f0f9ff;border-radius:4px">
+              <thead><tr style="background:#e0f2fe">
+                <th style="padding:2px 8px;text-align:left;font-size:6.5pt;color:#0369a1">Canal</th>
+                <th style="padding:2px 6px;text-align:right;font-size:6.5pt;color:#0369a1">Precio</th>
+                <th style="padding:2px 6px;text-align:right;font-size:6.5pt;color:#0369a1">Comisión</th>
+                <th style="padding:2px 6px;text-align:right;font-size:6.5pt;color:#0369a1">Costo total</th>
+                <th style="padding:2px 6px;text-align:right;font-size:6.5pt;color:#0369a1">Margen</th>
+              </tr></thead>
+              <tbody>${canalRows}</tbody>
+            </table>` : ''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  `).join('');
+
+  // ── DETALLE: Promociones ──────────────────────────────────────────────────
+  const promoDetailCards = promos.length ? `
+  <div style="page-break-before:always;margin-top:0">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px;padding-bottom:8px;border-bottom:3px solid #7c3aed">
+      <div>
+        <div style="font-size:16pt;font-weight:800;color:#7c3aed">Detalle de Promociones</div>
+        <div style="font-size:8pt;color:#666;margin-top:2px">${promos.length} promociones activas</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
+      ${promos.map(p => {
+        const pvNeto = (p.precioVenta || 0) / 1.19;
+        const costo = p.costoTotal || 0;
+        const mp = pvNeto > 0 ? ((pvNeto - costo) / pvNeto) * 100 : 0;
+        const precioSep = (p.items||[]).reduce((s,i)=>s+(i.precioUnitario||0)*(i.cantidad||1),0);
+        const ahorro = precioSep - (p.precioVenta||0);
+
+        const itemRows = (p.items||[]).map((i,ii) => {
+          const sub = (i.costoUnitario||0)*(i.cantidad||1);
+          const pSub = (i.precioUnitario||0)*(i.cantidad||1);
+          return `<tr style="background:${ii%2===0?'#fff':'#f9fafb'}">
+            <td style="padding:3px 6px;font-size:7pt">${i.cantidad>1?i.cantidad+'× ':''}${i.nombre}</td>
+            <td style="padding:3px 6px;text-align:right;font-size:7pt;color:#555">${fmt(i.costoUnitario||0)}</td>
+            <td style="padding:3px 6px;text-align:right;font-size:7pt;color:#555">${pSub ? fmt(pSub) : '—'}</td>
+            <td style="padding:3px 6px;text-align:right;font-size:7pt;font-weight:600">${fmt(sub)}</td>
+          </tr>`;
+        }).join('');
+
+        const canalRows = plataformas.map(plt => {
+          const c = p.canales?.[plt.id];
+          if (!c) return '';
+          const mc = parseFloat(c.margenCanal)||0;
+          const pvCanal = c.precioVenta || p.precioVenta || 0;
+          return `<tr>
+            <td style="padding:3px 8px;font-size:7.5pt;font-weight:600;color:#0369a1">🚚 ${c.nombre}</td>
+            <td style="padding:3px 6px;text-align:right;font-size:7.5pt">${fmt(pvCanal)}</td>
+            <td style="padding:3px 6px;text-align:right;font-size:7pt;color:#dc3545">${fmt(c.costoComision||0)}</td>
+            <td style="padding:3px 6px;text-align:right;font-size:7pt">${fmt(c.costoTotalCanal||0)}</td>
+            <td style="padding:3px 6px;text-align:right"><span style="background:${mBg(mc)};color:${mColor(mc)};padding:1px 5px;border-radius:8px;font-size:7pt;font-weight:700">${fmtN(mc)}</span></td>
+          </tr>`;
+        }).filter(Boolean).join('');
+
+        return `<div style="background:#fff;border:1px solid #ddd8f8;border-radius:6px;padding:10px;page-break-inside:avoid">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #ede9fe">
+            <div style="font-size:9.5pt;font-weight:800;color:#4c1d95">${p.nombre}</div>
+            <div style="text-align:right">
+              <div style="font-size:10pt;font-weight:800">${fmt(p.precioVenta||0)}</div>
+              <span style="background:${mBg(mp)};color:${mColor(mp)};padding:2px 8px;border-radius:10px;font-size:8pt;font-weight:700">${fmtN(mp)}</span>
+            </div>
+          </div>
+          <div style="font-size:7pt;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Ítems</div>
+          <table style="width:100%;border-collapse:collapse;margin-bottom:6px">
+            <thead><tr style="background:#f5f5f5">
+              <th style="padding:2px 6px;text-align:left;font-size:6.5pt;color:#666">Ítem</th>
+              <th style="padding:2px 6px;text-align:right;font-size:6.5pt;color:#666">Costo unit.</th>
+              <th style="padding:2px 6px;text-align:right;font-size:6.5pt;color:#666">Precio unit.</th>
+              <th style="padding:2px 6px;text-align:right;font-size:6.5pt;color:#666">Costo total</th>
+            </tr></thead>
+            <tbody>${itemRows}</tbody>
+            <tfoot><tr style="background:#f8f9fa;border-top:1px solid #ddd">
+              <td style="padding:3px 6px;font-size:7pt;color:#555">Ahorro cliente: <strong style="color:#1a7a4a">${ahorro>0?fmt(ahorro):'—'}</strong></td>
+              <td colspan="2" style="padding:3px 6px;font-size:7pt;font-weight:700;text-align:right;color:#555">Costo total:</td>
+              <td style="padding:3px 6px;text-align:right;font-size:7.5pt;font-weight:800">${fmt(costo)}</td>
+            </tfoot>
+          </table>
+          ${canalRows ? `
+          <div style="font-size:7pt;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;margin-top:4px">Delivery</div>
+          <table style="width:100%;border-collapse:collapse;background:#f0f9ff;border-radius:4px">
+            <thead><tr style="background:#e0f2fe">
+              <th style="padding:2px 8px;text-align:left;font-size:6.5pt;color:#0369a1">Canal</th>
+              <th style="padding:2px 6px;text-align:right;font-size:6.5pt;color:#0369a1">Precio</th>
+              <th style="padding:2px 6px;text-align:right;font-size:6.5pt;color:#0369a1">Comisión</th>
+              <th style="padding:2px 6px;text-align:right;font-size:6.5pt;color:#0369a1">Costo total</th>
+              <th style="padding:2px 6px;text-align:right;font-size:6.5pt;color:#0369a1">Margen</th>
+            </tr></thead>
+            <tbody>${canalRows}</tbody>
+          </table>` : ''}
+        </div>`;
+      }).join('')}
+    </div>
+  </div>` : '';
+
+  // ── HTML final ────────────────────────────────────────────────────────────
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; font-size:9pt; color:#1a1a1a; background:#fff; }
+  .page { padding:${forPrint ? '8mm 10mm' : '20px 24px'}; }
+  .doc-header { display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:14px; padding-bottom:10px; border-bottom:3px solid #c0392b; }
+  .doc-title  { font-size:18pt; font-weight:800; color:#c0392b; }
+  .doc-sub    { font-size:9pt; color:#666; margin-top:2px; }
+  .doc-meta   { text-align:right; font-size:8pt; color:#666; }
+  .kpi-bar    { display:flex; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+  .kpi        { background:#f8f9fa; border-radius:8px; padding:8px 14px; border-left:3px solid #c0392b; }
+  .kpi-label  { font-size:7.5pt; color:#888; text-transform:uppercase; letter-spacing:0.5px; }
+  .kpi-val    { font-size:13pt; font-weight:800; color:#1a1a1a; }
+  .section-title { font-size:13pt; font-weight:800; color:#1a1a1a; margin:22px 0 6px; padding-bottom:6px; border-bottom:2px solid #e5e7eb; }
+  table { width:100%; border-collapse:collapse; }
+  th { background:#f5f5f5; text-align:left; }
+  td { border-bottom:1px solid #f0e0de; vertical-align:middle; }
+  .doc-footer { margin-top:16px; padding-top:8px; border-top:1px solid #eee; text-align:center; font-size:7pt; color:#aaa; }
+  @media print {
+    @page { size:A4 landscape; margin:8mm 10mm; }
+    body  { font-size:8pt; }
+    .page { padding:0; }
+    .no-print { display:none; }
+  }
+</style>
+</head><body><div class="page">
+
+  <!-- ══ ENCABEZADO ══ -->
+  <div class="doc-header">
+    <div>
+      <div class="doc-title">${clienteNombre}</div>
+      <div class="doc-sub">Informe de Márgenes y Promociones</div>
+    </div>
+    <div class="doc-meta">
+      <div><strong>Fecha:</strong> ${fecha}</div>
+      <div><strong>Recetas:</strong> ${activos.length} · <strong>Promociones:</strong> ${promos.length}</div>
+    </div>
+  </div>
+
+  <!-- ══ KPIs ══ -->
+  <div class="kpi-bar">
+    <div class="kpi"><div class="kpi-label">Total recetas</div><div class="kpi-val">${activos.length}</div></div>
+    <div class="kpi"><div class="kpi-label">Margen promedio</div><div class="kpi-val">${fmtN(avgMrg)}</div></div>
+    <div class="kpi"><div class="kpi-label">Sobre 70%</div><div class="kpi-val" style="color:#1a7a4a">${activos.filter(m=>(m.margen||0)>=70).length}</div></div>
+    <div class="kpi"><div class="kpi-label">Bajo 50%</div><div class="kpi-val" style="color:#c53030">${activos.filter(m=>(m.margen||0)<50).length}</div></div>
+    <div class="kpi"><div class="kpi-label">Secciones</div><div class="kpi-val">${Object.keys(grupos).length}</div></div>
+    ${promos.length ? `<div class="kpi" style="border-left-color:#7c3aed"><div class="kpi-label">Promociones</div><div class="kpi-val" style="color:#7c3aed">${promos.length}</div></div>` : ''}
+  </div>
+
+  <!-- ══ RESUMEN MÁRGENES ══ -->
+  <div class="section-title">Resumen de Recetas</div>
+  <table>
+    <thead><tr>
+      <th style="padding:6px 10px;text-align:left;font-size:7.5pt;color:#666;border-bottom:2px solid #ddd">Producto</th>
+      <th style="padding:6px 8px;text-align:right;font-size:7.5pt;color:#666;border-bottom:2px solid #ddd">Costo</th>
+      <th style="padding:6px 8px;text-align:right;font-size:7.5pt;color:#666;border-bottom:2px solid #ddd">Venta</th>
+      <th style="padding:6px 8px;text-align:right;font-size:7.5pt;color:#666;border-bottom:2px solid #ddd">Margen</th>
+      <th style="padding:6px 8px;text-align:center;font-size:7.5pt;color:#666;border-bottom:2px solid #ddd">Ing.</th>
+      ${plataformaHeaders}
+    </tr></thead>
+    <tbody>${categoriaRows}</tbody>
+  </table>
+
+  <!-- ══ RESUMEN PROMOCIONES ══ -->
+  ${promoSummarySection}
+
+  <!-- ══ DETALLE RECETAS ══ -->
+  <div style="page-break-before:always;margin-top:0">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px;padding-bottom:8px;border-bottom:3px solid #c0392b">
+      <div>
+        <div style="font-size:16pt;font-weight:800;color:#c0392b">Detalle de Recetas</div>
+        <div style="font-size:8pt;color:#666;margin-top:2px">${activos.length} recetas · ingredientes y canales de delivery</div>
+      </div>
+    </div>
+    ${detailCards}
+  </div>
+
+  <!-- ══ DETALLE PROMOCIONES ══ -->
+  ${promoDetailCards}
+
+  <div class="doc-footer">Generado por AsesoriasRestaurantes · ${fecha}</div>
+</div></body></html>`;
+}
+
+function previewMargenesPDF() {
+  if (!state.margenes?.length) { toast('No hay recetas cargadas', 'error'); return; }
+  const html = buildMargenesHTML(false);
+  const preview = document.getElementById('mrg-pdf-preview');
+  preview.innerHTML = '';
+  const iframe = document.createElement('iframe');
+  iframe.style.cssText = 'width:100%;height:100%;min-height:500px;border:none;border-radius:6px;background:#fff';
+  preview.style.padding = '0';
+  preview.appendChild(iframe);
+  iframe.contentDocument.open();
+  iframe.contentDocument.write(html);
+  iframe.contentDocument.close();
+  openModal('modal-export-mrg');
+}
+
+function downloadMargenesPDF() {
+  const html = buildMargenesHTML(true);
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const win  = window.open(url, '_blank');
+  if (win) win.onload = () => { win.focus(); win.print(); };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 function populateIngFilters() {
   const catSel = document.getElementById('ing-filter-cat');
@@ -3231,6 +3838,60 @@ async function deleteInventario(id) {
 let mrgCols = 3;
 let prepCols = 3;
 let mrgActiveTab = 'recetas';
+let _mrgShowInactive = false;
+let _promoShowInactive = false;
+let _drwActiveCanalId = 'generico';
+let _drwCanales = {};
+
+function toggleMrgInactivos() {
+  _mrgShowInactive = !_mrgShowInactive;
+  const btn = document.getElementById('mrg-inactivos-btn');
+  if (_mrgShowInactive) {
+    btn.innerHTML = '<i class="bi bi-eye"></i> Inactivos';
+    btn.style.background = 'var(--primary)';
+    btn.style.color = '#fff';
+  } else {
+    btn.innerHTML = '<i class="bi bi-eye-slash"></i> Inactivos';
+    btn.style.background = '';
+    btn.style.color = '';
+  }
+  filterRecetas();
+}
+
+function togglePromoInactivas() {
+  _promoShowInactive = !_promoShowInactive;
+  const btn = document.getElementById('promo-inactivas-btn');
+  if (_promoShowInactive) {
+    btn.innerHTML = '<i class="bi bi-eye"></i> Inactivas';
+    btn.style.background = 'var(--primary)';
+    btn.style.color = '#fff';
+  } else {
+    btn.innerHTML = '<i class="bi bi-eye-slash"></i> Inactivas';
+    btn.style.background = '';
+    btn.style.color = '';
+  }
+  renderPromociones(_promoCache);
+}
+
+async function toggleMargenActivo(id, currentActivo) {
+  try {
+    const nuevoActivo = !currentActivo;
+    await api('PATCH', '/margenes/' + id + '/activo', { activo: nuevoActivo });
+    const m = state.margenes.find(x => x.id === id);
+    if (m) m.activo = nuevoActivo;
+    filterRecetas();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function togglePromoActivo(id, currentActivo) {
+  try {
+    const nuevoActivo = !currentActivo;
+    await api('PATCH', '/promociones/' + id + '/activo', { activo: nuevoActivo });
+    const p = _promoCache.find(x => x.id === id);
+    if (p) p.activo = nuevoActivo;
+    renderPromociones(_promoCache);
+  } catch (e) { toast(e.message, 'error'); }
+}
 
 function switchMrgTab(tab) {
   mrgActiveTab = tab;
@@ -3260,19 +3921,20 @@ function mrgPillClass(m) { return m >= 70 ? 'high' : m >= 50 ? 'mid' : 'low'; }
 
 async function loadMargenes() {
   try {
-    const [ings, preps, recetas, catMenu] = await Promise.all([
+    const [ings, preps, recetas, catMenu, info] = await Promise.all([
       state.ingredientes.length ? Promise.resolve(state.ingredientes) : api('GET', '/ingredientes'),
       api('GET', '/preparaciones'),
       api('GET', '/margenes'),
-      api('GET', '/categorias-menu')
+      api('GET', '/categorias-menu'),
+      api('GET', '/info')
     ]);
     state.ingredientes = ings;
     state.preparaciones = preps;
     state.margenes = recetas;
     state.categoriasMenu = catMenu;
+    state.plataformasDelivery = info.plataformasDelivery || [];
     renderPrepsGrid();
     renderMrgStats();
-    // Populate category filters
     populateMrgCatFilter();
     filterRecetas();
   } catch (e) { toast(e.message, 'error'); }
@@ -3287,19 +3949,31 @@ function renderRecetasGrid(list) {
   }
   grid.innerHTML = rows.map(m => {
     const mPct = parseFloat(m.margen) || 0;
+    const isActivo = m.activo !== false;
+    const canales = m.canales || {};
+    const canalBadges = (state.plataformasDelivery || [])
+      .filter(p => canales[p.id] != null)
+      .map(p => {
+        const c = canales[p.id];
+        const mc = parseFloat(c?.margenCanal) || 0;
+        const precioTag = c?.precioVenta ? ` $${fmt(c.precioVenta)}` : '';
+        return `<span class="canal-mrg-chip" style="color:${marginColor(mc)}">
+          <i class="bi bi-truck" style="font-size:0.65rem"></i> ${p.nombre}${precioTag} ${fmtPct(mc)}
+        </span>`;
+      }).join('');
     return `
-    <div class="recipe-card">
+    <div class="recipe-card" style="${isActivo ? '' : 'opacity:0.45;filter:grayscale(0.4)'}">
       <div class="recipe-card-top">
-        <div class="recipe-card-name">${m.nombre}</div>
+        <div class="recipe-card-name">${m.nombre}${!isActivo ? ' <span style="font-size:10px;color:var(--muted);font-weight:400">(inactivo)</span>' : ''}</div>
         <div class="recipe-card-actions">
           <span class="mrg-pill ${mrgPillClass(mPct)}">${fmtPct(mPct)}</span>
           <button class="btn btn-outline btn-sm btn-icon" onclick="editReceta('${m.id}')" title="Editar"><i class="bi bi-pencil"></i></button>
-          <button class="btn btn-outline btn-sm btn-icon" onclick="deleteReceta('${m.id}','${m.nombre.replace(/'/g,"\\'")}')"><i class="bi bi-x" style="color:var(--danger)"></i></button>
+          <button class="btn btn-outline btn-sm btn-icon" onclick="toggleMargenActivo('${m.id}',${isActivo})" title="${isActivo ? 'Desactivar' : 'Activar'}" style="color:${isActivo ? 'var(--muted)' : 'var(--success)'}"><i class="bi bi-${isActivo ? 'toggle-on' : 'toggle-off'}"></i></button>
         </div>
       </div>
       <div class="recipe-card-tags">
         ${m.categoria ? `<span class="recipe-card-tag cat">${m.categoria}</span>` : ''}
-        ${m.metodo ? `<span class="recipe-card-tag metodo">${m.metodo}</span>` : ''}
+        ${canalBadges}
       </div>
       <div class="recipe-card-stats">
         <div><div class="recipe-stat-label">COSTO</div><div class="recipe-stat-val">$${fmt(m.costoPorcion)}</div></div>
@@ -3346,37 +4020,24 @@ function renderMrgStats() {
   document.getElementById('stat-sobre70').textContent = state.margenes.filter(m => (m.margen||0) >= 70).length;
 }
 
-function populateMrgCatFilter(tipo) {
-  const catMap = Object.fromEntries((state.categoriasMenu || []).map(c => [c.id, c]));
+function populateMrgCatFilter() {
   const sel = document.getElementById('mrg-filter-cat');
   const prev = sel.value;
-  // Filtrar subcategorías por tipo si está seleccionado
-  const cats = [...new Set((state.margenes || []).map(m => m.categoriaMenuId).filter(Boolean))]
-    .sort((a, b) => (catMap[a]?.orden ?? 99) - (catMap[b]?.orden ?? 99))
-    .filter(id => !tipo || catMap[id]?.tipo === tipo);
-  sel.innerHTML = '<option value="">Todas las subcategorías</option>' +
-    cats.map(id => `<option value="${catMap[id]?.nombre}">${catMap[id]?.nombre}</option>`).join('');
-  sel.value = prev; // restaurar selección si sigue siendo válida
-}
-
-function onFilterTipoChange() {
-  const tipo = document.getElementById('mrg-filter-tipo').value;
-  populateMrgCatFilter(tipo);
-  document.getElementById('mrg-filter-cat').value = '';
-  filterRecetas();
+  const cats = [...new Set((state.margenes || []).map(m => m.categoriaMenu).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'));
+  sel.innerHTML = '<option value="">Todas las categorías</option>' +
+    cats.map(c => `<option value="${c}">${c}</option>`).join('');
+  sel.value = prev;
 }
 
 function filterRecetas() {
   const q = document.getElementById('mrg-search').value.toLowerCase();
-  const tipo = document.getElementById('mrg-filter-tipo').value;
   const cat = document.getElementById('mrg-filter-cat').value;
   const mrg = document.getElementById('mrg-filter-mrg').value;
-  const catMap = Object.fromEntries((state.categoriasMenu || []).map(c => [c.nombre, c]));
   let list = state.margenes.filter(m => {
-    const catObj = catMap[m.categoriaMenu];
+    const isActivo = m.activo !== false;
     return (
+      (_mrgShowInactive ? true : isActivo) &&
       (!q || m.nombre.toLowerCase().includes(q) || (m.categoriaMenu||'').toLowerCase().includes(q)) &&
-      (!tipo || catObj?.tipo === tipo) &&
       (!cat || m.categoriaMenu === cat) &&
       (!mrg || (mrg === 'high' && m.margen >= 70) || (mrg === 'mid' && m.margen >= 50 && m.margen < 70) || (mrg === 'low' && m.margen < 50))
     );
@@ -3396,8 +4057,9 @@ function renderRecetasList(list) {
     const mPct = parseFloat(m.margen) || 0;
     const catObj = catMap[m.categoriaMenu];
     const tipo = catObj?.tipo || '';
-    return `<tr>
-      <td><strong>${m.nombre}</strong></td>
+    const isActivo = m.activo !== false;
+    return `<tr style="${isActivo ? '' : 'opacity:0.45'}">
+      <td><strong>${m.nombre}</strong>${!isActivo ? ' <span style="font-size:10px;color:var(--muted)">(inactivo)</span>' : ''}</td>
       <td><span style="font-size:0.8rem;color:var(--muted)">${tipo}</span></td>
       <td>${m.categoriaMenu ? `<span class="recipe-card-tag cat" style="font-size:0.78rem">${m.categoriaMenu}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
       <td style="text-align:right">$${fmt(m.costoPorcion)}</td>
@@ -3405,7 +4067,7 @@ function renderRecetasList(list) {
       <td style="text-align:right"><span class="mrg-pill ${mrgPillClass(mPct)}">${fmtPct(mPct)}</span></td>
       <td style="text-align:right">
         <button class="btn btn-outline btn-sm btn-icon" onclick="editReceta('${m.id}')"><i class="bi bi-pencil"></i></button>
-        <button class="btn btn-outline btn-sm btn-icon" onclick="deleteReceta('${m.id}','${m.nombre.replace(/'/g,"\\'")}')"><i class="bi bi-x" style="color:var(--danger)"></i></button>
+        <button class="btn btn-outline btn-sm btn-icon" onclick="toggleMargenActivo('${m.id}',${isActivo})" title="${isActivo ? 'Desactivar' : 'Activar'}" style="color:${isActivo ? 'var(--muted)' : 'var(--success)'}"><i class="bi bi-toggle-${isActivo ? 'on' : 'off'}"></i></button>
       </td>
     </tr>`;
   }).join('');
@@ -3418,28 +4080,205 @@ function filterPreps() {
 
 // ── Drawer Receta ─────────────────────────────────────────────────────────────
 function openRecetaDrawer(receta) {
+  _drwActiveCanalId = 'generico';
+  _drwCanales = {};
+  if (receta?.canales) {
+    Object.keys(receta.canales).forEach(cId => {
+      _drwCanales[cId] = {
+        ingredientesExtra: [...(receta.canales[cId].ingredientesExtra || [])],
+        precioVenta: receta.canales[cId].precioVenta || ''
+      };
+    });
+  }
+
   document.getElementById('drw-receta-title').textContent = receta ? 'Editar receta' : 'Nueva receta';
   document.getElementById('drw-r-id').value = receta?.id || '';
   document.getElementById('drw-r-nombre').value = receta?.nombre || '';
-  document.getElementById('drw-r-metodo').value = receta?.metodo || '';
   document.getElementById('drw-r-precio').value = receta?.precioVenta || '';
   document.getElementById('drw-r-porciones').value = receta?.porciones || 1;
   document.getElementById('drw-r-notas').value = receta?.notas || '';
-  // Populate sección de carta select
+
   const catMenuSel = document.getElementById('drw-r-cat-menu');
   catMenuSel.innerHTML = '<option value="">— Sin sección —</option>' +
     (state.categoriasMenu || []).map(c =>
       `<option value="${c.id}"${receta?.categoriaMenuId === c.id ? ' selected' : ''}>${c.nombre}</option>`
     ).join('');
-  // Build rows
+
   const list = document.getElementById('drw-r-ing-list');
   list.innerHTML = '';
   if (receta?.ingredientes?.length) {
     receta.ingredientes.forEach(i => addDrwIngRow(i.tipo || 'ingrediente', i));
   }
-  recalcDrwCost();
+
+  renderRecetaChannelTabs(receta);
+  switchRecetaTab('generico');
+
   document.getElementById('drw-receta-overlay').classList.add('open');
   document.getElementById('drw-receta').classList.add('open');
+}
+
+function renderRecetaChannelTabs(receta) {
+  const tabBar = document.getElementById('drw-r-channel-tabs');
+  const platformsContent = document.getElementById('drw-platform-tabs-content');
+  const platforms = state.plataformasDelivery || [];
+
+  tabBar.innerHTML = `
+    <button class="drw-channel-tab active" id="tab-btn-generico" onclick="switchRecetaTab('generico')">Genérico</button>
+    ${platforms.map(p => `
+      <button class="drw-channel-tab" id="tab-btn-${p.id}" onclick="switchRecetaTab('${p.id}')">
+        <i class="bi bi-truck" style="font-size:0.72rem"></i> ${p.nombre}
+      </button>`).join('')}`;
+
+  platformsContent.innerHTML = platforms.map(p => {
+    if (!_drwCanales[p.id]) _drwCanales[p.id] = { ingredientesExtra: [] };
+    const savedPrecio = _drwCanales[p.id]?.precioVenta || '';
+    return `
+    <div id="drw-tab-${p.id}" style="display:none">
+
+      <!-- Precio propio de la plataforma -->
+      <div class="form-group" style="background:var(--surface);border-radius:10px;padding:12px 14px;margin-bottom:14px;border:1px solid var(--border)">
+        <label class="form-label" style="margin-bottom:6px;font-size:0.85rem">
+          <i class="bi bi-tag" style="color:var(--primary)"></i> Precio de venta en ${p.nombre}
+        </label>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="color:var(--muted);font-size:0.9rem">$</span>
+          <input type="number" id="drw-canal-precio-${p.id}" class="form-control"
+            placeholder="Deja vacío para usar el precio genérico"
+            value="${savedPrecio}"
+            min="0" step="1" style="max-width:200px"
+            oninput="recalcCanalCost('${p.id}')" />
+          <span style="font-size:0.78rem;color:var(--muted)" id="drw-canal-precio-hint-${p.id}"></span>
+        </div>
+      </div>
+
+      <div style="font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">
+        Ingredientes base (genérico)
+      </div>
+      <div id="drw-canal-base-${p.id}" style="margin-bottom:14px"></div>
+
+      <div class="form-group">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <label class="form-label" style="margin:0;font-size:0.88rem">Ingredientes exclusivos de ${p.nombre}</label>
+          <button class="btn btn-outline btn-sm" onclick="addDrwIngRow('ingrediente',null,'drw-r-extra-${p.id}')">
+            <i class="bi bi-plus"></i> Ingrediente
+          </button>
+        </div>
+        <div id="drw-r-extra-${p.id}"></div>
+      </div>
+
+      <div class="drw-cost-box">
+        <div class="drw-cost-row">
+          <span class="drw-cost-label">Costo base</span>
+          <span class="drw-cost-val" id="drw-canal-costo-base-${p.id}">$0</span>
+        </div>
+        <div class="drw-cost-row">
+          <span class="drw-cost-label">Costo adicional delivery</span>
+          <span class="drw-cost-val" id="drw-canal-costo-extra-${p.id}">$0</span>
+        </div>
+        <div class="drw-cost-row" style="color:var(--danger)">
+          <span class="drw-cost-label">Comisión ${p.nombre} (${p.comision}%)</span>
+          <span class="drw-cost-val" id="drw-canal-comision-${p.id}">$0</span>
+        </div>
+        <div class="drw-cost-row" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+          <span class="drw-cost-label" style="font-size:0.95rem">Margen ${p.nombre}</span>
+          <span class="drw-cost-val" style="font-size:1.2rem" id="drw-canal-margen-${p.id}">—%</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Populate saved extra ingredients for each platform
+  platforms.forEach(p => {
+    (_drwCanales[p.id]?.ingredientesExtra || []).forEach(ing => {
+      addDrwIngRow(ing.tipo || 'ingrediente', ing, `drw-r-extra-${p.id}`);
+    });
+  });
+}
+
+function switchRecetaTab(tabId) {
+  _drwActiveCanalId = tabId;
+  document.querySelectorAll('.drw-channel-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-btn-' + tabId)?.classList.add('active');
+  document.getElementById('drw-tab-generico').style.display = tabId === 'generico' ? '' : 'none';
+  (state.plataformasDelivery || []).forEach(p => {
+    const el = document.getElementById('drw-tab-' + p.id);
+    if (el) el.style.display = tabId === p.id ? '' : 'none';
+  });
+  if (tabId !== 'generico') {
+    updateCanalBaseIngredients(tabId);
+    recalcCanalCost(tabId);
+  }
+}
+
+function updateCanalBaseIngredients(canalId) {
+  const baseDiv = document.getElementById('drw-canal-base-' + canalId);
+  if (!baseDiv) return;
+  const rows = [];
+  document.querySelectorAll('#drw-r-ing-list .drw-ing-row').forEach(row => {
+    const sel = row.querySelector('.drw-ing-select');
+    const opt = sel?.selectedOptions[0];
+    if (!opt?.value) return;
+    const cant = row.querySelector('.drw-ing-cant')?.value || 0;
+    const unit = opt?.dataset?.unidad || '';
+    const nombre = opt?.text?.split('(')[0].trim() || '';
+    const costo = parseFloat(opt?.dataset?.costo) || 0;
+    rows.push(`<div class="drw-canal-base-ing"><span>${nombre} (${cant} ${unit})</span><span>$${fmt(costo * parseFloat(cant))}</span></div>`);
+  });
+  baseDiv.innerHTML = rows.length ? rows.join('') : '<p style="font-size:0.82rem;color:var(--muted)">Sin ingredientes base</p>';
+}
+
+function recalcCanalCost(canalId) {
+  const p = (state.plataformasDelivery || []).find(x => x.id === canalId);
+  if (!p) return;
+
+  let costoBase = 0;
+  document.querySelectorAll('#drw-r-ing-list .drw-ing-row').forEach(row => {
+    const sel = row.querySelector('.drw-ing-select');
+    const cant = parseFloat(row.querySelector('.drw-ing-cant')?.value) || 0;
+    costoBase += (parseFloat(sel?.selectedOptions[0]?.dataset?.costo) || 0) * cant;
+  });
+  const porciones = parseFloat(document.getElementById('drw-r-porciones')?.value) || 1;
+  const costoBasePorcion = costoBase / porciones;
+
+  let costoExtra = 0;
+  document.querySelectorAll(`#drw-r-extra-${canalId} .drw-ing-row`).forEach(row => {
+    const sel = row.querySelector('.drw-ing-select');
+    const cant = parseFloat(row.querySelector('.drw-ing-cant')?.value) || 0;
+    costoExtra += (parseFloat(sel?.selectedOptions[0]?.dataset?.costo) || 0) * cant;
+  });
+
+  // Usar precio propio de la plataforma, o el genérico si no hay
+  const precioGenerico = parseFloat(document.getElementById('drw-r-precio')?.value) || 0;
+  const precioInputCanal = parseFloat(document.getElementById(`drw-canal-precio-${canalId}`)?.value) || 0;
+  const precio = precioInputCanal > 0 ? precioInputCanal : precioGenerico;
+
+  // Mostrar hint si usa precio genérico
+  const hint = document.getElementById(`drw-canal-precio-hint-${canalId}`);
+  if (hint) hint.textContent = precioInputCanal > 0 ? '' : `(usando precio genérico $${fmt(precioGenerico)})`;
+
+  const costoComision = (p.comision / 100) * precio;
+  const costoTotal = costoBasePorcion + costoExtra + costoComision;
+  const pvNeto = precio / 1.19;
+  const margenCanal = pvNeto > 0 ? ((pvNeto - costoTotal) / pvNeto) * 100 : 0;
+
+  const elBase = document.getElementById(`drw-canal-costo-base-${canalId}`);
+  const elExtra = document.getElementById(`drw-canal-costo-extra-${canalId}`);
+  const elCom = document.getElementById(`drw-canal-comision-${canalId}`);
+  const elMrg = document.getElementById(`drw-canal-margen-${canalId}`);
+  if (elBase) elBase.textContent = '$' + fmt(costoBasePorcion);
+  if (elExtra) elExtra.textContent = '$' + fmt(costoExtra);
+  if (elCom) elCom.textContent = '$' + fmt(costoComision);
+  if (elMrg) { elMrg.textContent = fmtPct(margenCanal); elMrg.style.color = marginColor(margenCanal); }
+}
+
+function moveDrwIngRow(btn, dir) {
+  const row = btn.closest('.drw-ing-row');
+  const list = row.parentNode;
+  if (dir === 'up' && row.previousElementSibling) {
+    list.insertBefore(row, row.previousElementSibling);
+  } else if (dir === 'down' && row.nextElementSibling) {
+    list.insertBefore(row.nextElementSibling, row);
+  }
 }
 
 function closeRecetaDrawer() {
@@ -3449,30 +4288,43 @@ function closeRecetaDrawer() {
 
 function editReceta(id) { openRecetaDrawer(state.margenes.find(m => m.id === id)); }
 
-function addDrwIngRow(tipo, data) {
-  const list = document.getElementById('drw-r-ing-list');
+function addDrwIngRow(tipo, data, listId) {
+  const containerId = listId || 'drw-r-ing-list';
+  const isCanal = containerId.startsWith('drw-r-extra-');
+  const canalId = isCanal ? containerId.replace('drw-r-extra-', '') : null;
+  const list = document.getElementById(containerId);
+  if (!list) return;
+
   const row = document.createElement('div');
   row.className = 'drw-ing-row';
 
-  let options, costoUnitario, unidad;
+  let options, unidad;
   if (tipo === 'preparacion') {
     options = (state.preparaciones||[]).map(p =>
       `<option value="${p.id}" data-costo="${p.costoPorUnidad}" data-unidad="${p.unidad}"${data?.refId === p.id ? ' selected':''}>
-        ${p.nombre} (${p.unidad})
-      </option>`).join('');
-    costoUnitario = data?.costoUnitario || 0;
+        ${p.nombre} (${p.unidad})</option>`).join('');
     unidad = data?.unidad || '';
   } else {
     options = state.ingredientes.map(i =>
       `<option value="${i.id}" data-costo="${i.costo}" data-unidad="${i.unidad}"${data?.ingredienteId === i.id ? ' selected':''}>
-        ${i.nombre} (${i.unidad})
-      </option>`).join('');
-    costoUnitario = data?.costoUnitario || 0;
+        ${i.nombre} (${i.unidad})</option>`).join('');
     unidad = data?.unidad || '';
   }
 
+  const removeAction = canalId
+    ? `this.closest('.drw-ing-row').remove();recalcCanalCost('${canalId}')`
+    : `this.closest('.drw-ing-row').remove();recalcDrwCost()`;
+
   row.innerHTML = `
     <div class="drw-ing-main">
+      <div style="display:flex;flex-direction:column;gap:1px;flex-shrink:0">
+        <button class="btn btn-outline btn-sm btn-icon" style="padding:1px 4px;height:18px" onclick="moveDrwIngRow(this,'up')" title="Mover arriba">
+          <i class="bi bi-chevron-up" style="font-size:0.65rem"></i>
+        </button>
+        <button class="btn btn-outline btn-sm btn-icon" style="padding:1px 4px;height:18px" onclick="moveDrwIngRow(this,'down')" title="Mover abajo">
+          <i class="bi bi-chevron-down" style="font-size:0.65rem"></i>
+        </button>
+      </div>
       <span class="drw-ing-badge tipo-${tipo}">${tipo === 'preparacion' ? 'Preparación' : 'Ingrediente'}</span>
       <select class="form-control drw-ing-select">
         <option value="">— Seleccionar —</option>
@@ -3480,7 +4332,7 @@ function addDrwIngRow(tipo, data) {
       </select>
       <input type="number" class="form-control drw-ing-cant" min="0" step="0.001" placeholder="Cant." value="${data?.cantidad || ''}" />
       <span class="drw-ing-unit">${unidad}</span>
-      <button class="btn btn-outline btn-sm btn-icon" onclick="this.closest('.drw-ing-row').remove();recalcDrwCost()">
+      <button class="btn btn-outline btn-sm btn-icon" onclick="${removeAction}">
         <i class="bi bi-x" style="color:var(--danger)"></i>
       </button>
     </div>
@@ -3497,11 +4349,9 @@ function addDrwIngRow(tipo, data) {
     const costo = parseFloat(opt?.dataset?.costo) || 0;
     const cant = parseFloat(cantInp.value) || 0;
     unitSpan.textContent = opt?.dataset?.unidad || '';
-    const subtotal = costo * cant;
-    costDiv.textContent = cant > 0 && costo > 0
-      ? `$${fmtDec(costo)} × ${cant} = $${fmt(subtotal)}`
-      : '';
-    recalcDrwCost();
+    costDiv.textContent = cant > 0 && costo > 0 ? `$${fmtDec(costo)} × ${cant} = $${fmt(costo * cant)}` : '';
+    if (canalId) recalcCanalCost(canalId);
+    else recalcDrwCost();
   };
 
   sel.addEventListener('change', update);
@@ -3515,8 +4365,7 @@ function recalcDrwCost() {
   document.querySelectorAll('#drw-r-ing-list .drw-ing-row').forEach(row => {
     const sel = row.querySelector('.drw-ing-select');
     const cant = parseFloat(row.querySelector('.drw-ing-cant')?.value) || 0;
-    const costo = parseFloat(sel.selectedOptions[0]?.dataset?.costo) || 0;
-    total += costo * cant;
+    total += (parseFloat(sel.selectedOptions[0]?.dataset?.costo) || 0) * cant;
   });
   const porciones = parseFloat(document.getElementById('drw-r-porciones')?.value) || 1;
   const precio = parseFloat(document.getElementById('drw-r-precio')?.value) || 0;
@@ -3528,31 +4377,60 @@ function recalcDrwCost() {
   const mEl = document.getElementById('drw-r-margen');
   mEl.textContent = fmtPct(margen);
   mEl.style.color = marginColor(margen);
+  // También recalcula todos los canales (precio/costo base puede haber cambiado)
+  (state.plataformasDelivery || []).forEach(p => {
+    if (document.getElementById(`drw-canal-margen-${p.id}`)) recalcCanalCost(p.id);
+  });
 }
 
-async function saveReceta() {
-  const nombre = document.getElementById('drw-r-nombre').value.trim();
-  if (!nombre) { toast('El nombre es requerido', 'error'); return; }
-
+function collectIngredientesFromContainer(containerId) {
   const ingredientes = [];
-  document.querySelectorAll('#drw-r-ing-list .drw-ing-row').forEach(row => {
+  document.querySelectorAll(`#${containerId} .drw-ing-row`).forEach(row => {
     const badge = row.querySelector('.drw-ing-badge');
     const tipo = badge?.classList.contains('tipo-preparacion') ? 'preparacion' : 'ingrediente';
     const sel = row.querySelector('.drw-ing-select');
     const cant = parseFloat(row.querySelector('.drw-ing-cant')?.value) || 0;
     if (!sel.value || cant <= 0) return;
     const opt = sel.selectedOptions[0];
-    const costo = parseFloat(opt?.dataset?.costo) || 0;
     const entry = {
-      tipo,
-      cantidad: cant,
+      tipo, cantidad: cant,
       unidad: opt?.dataset?.unidad || '',
-      costoUnitario: costo,
+      costoUnitario: parseFloat(opt?.dataset?.costo) || 0,
       nombre: opt?.text?.split('(')[0].trim() || ''
     };
     if (tipo === 'preparacion') entry.refId = sel.value;
     else entry.ingredienteId = sel.value;
     ingredientes.push(entry);
+  });
+  return ingredientes;
+}
+
+async function saveReceta() {
+  const nombre = document.getElementById('drw-r-nombre').value.trim();
+  if (!nombre) { toast('El nombre es requerido', 'error'); return; }
+
+  const ingredientes = collectIngredientesFromContainer('drw-r-ing-list');
+
+  // Collect canal data
+  const precio = parseFloat(document.getElementById('drw-r-precio').value) || 0;
+  const porciones = parseFloat(document.getElementById('drw-r-porciones').value) || 1;
+  const costoBase = ingredientes.reduce((s, i) => s + (i.costoUnitario || 0) * (i.cantidad || 0), 0) / porciones;
+
+  const canales = {};
+  (state.plataformasDelivery || []).forEach(p => {
+    const ingredientesExtra = collectIngredientesFromContainer(`drw-r-extra-${p.id}`);
+    const costoExtra = ingredientesExtra.reduce((s, i) => s + (i.costoUnitario || 0) * (i.cantidad || 0), 0);
+    const precioInputCanal = parseFloat(document.getElementById(`drw-canal-precio-${p.id}`)?.value) || 0;
+    const precioCanal = precioInputCanal > 0 ? precioInputCanal : precio;
+    const costoComision = (p.comision / 100) * precioCanal;
+    const costoTotalCanal = costoBase + costoExtra + costoComision;
+    const pvNeto = precioCanal / 1.19;
+    const margenCanal = pvNeto > 0 ? ((pvNeto - costoTotalCanal) / pvNeto) * 100 : 0;
+    canales[p.id] = {
+      nombre: p.nombre, comision: p.comision,
+      precioVenta: precioInputCanal > 0 ? precioInputCanal : null,
+      ingredientesExtra, costoExtra, costoComision, costoTotalCanal, margenCanal
+    };
   });
 
   const id = document.getElementById('drw-r-id').value;
@@ -3560,13 +4438,13 @@ async function saveReceta() {
   const body = {
     nombre,
     categoria: catMenuSel.value ? catMenuSel.selectedOptions[0]?.text : '',
-    metodo: document.getElementById('drw-r-metodo').value.trim(),
-    precioVenta: document.getElementById('drw-r-precio').value,
-    porciones: document.getElementById('drw-r-porciones').value,
+    precioVenta: precio,
+    porciones,
     ingredientes,
     notas: document.getElementById('drw-r-notas').value.trim(),
     categoriaMenuId: catMenuSel.value || '',
-    categoriaMenu: catMenuSel.value ? catMenuSel.selectedOptions[0]?.text : ''
+    categoriaMenu: catMenuSel.value ? catMenuSel.selectedOptions[0]?.text : '',
+    canales
   };
 
   try {
@@ -3804,6 +4682,57 @@ async function loadInfo() {
     document.getElementById('info-margen').value = data.margenOperacional ?? '';
     const dias = data.diasApertura || [];
     for (let d = 0; d < 7; d++) document.getElementById('info-dia-' + d).checked = dias.includes(d);
+    state.plataformasDelivery = data.plataformasDelivery || [];
+    renderPlataformasDelivery();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function renderPlataformasDelivery() {
+  const list = document.getElementById('plataformas-delivery-list');
+  if (!list) return;
+  const platforms = state.plataformasDelivery || [];
+  if (!platforms.length) {
+    list.innerHTML = '<p style="font-size:0.82rem;color:var(--muted)">Sin plataformas configuradas aún.</p>';
+    return;
+  }
+  list.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:8px">
+    ${platforms.map((p, idx) => `
+      <div class="plt-tag">
+        <span style="font-weight:700">${p.nombre}</span>
+        <span class="plt-comision-badge">${p.comision}%</span>
+        <button onclick="deletePlataformaDelivery(${idx})" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:0;line-height:1">
+          <i class="bi bi-x"></i>
+        </button>
+      </div>`).join('')}
+  </div>`;
+}
+
+function addPlataformaDelivery() {
+  const nombre = document.getElementById('plt-new-nombre').value.trim();
+  const comision = parseFloat(document.getElementById('plt-new-comision').value) || 0;
+  if (!nombre) { toast('Ingresa el nombre de la plataforma', 'error'); return; }
+  const id = nombre.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
+  if ((state.plataformasDelivery || []).some(p => p.id === id)) {
+    toast('Ya existe una plataforma con ese nombre', 'error'); return;
+  }
+  state.plataformasDelivery = [...(state.plataformasDelivery || []), { id, nombre, comision }];
+  document.getElementById('plt-new-nombre').value = '';
+  document.getElementById('plt-new-comision').value = '';
+  renderPlataformasDelivery();
+  savePlataformasDelivery();
+}
+
+function deletePlataformaDelivery(idx) {
+  if (!confirm('¿Eliminar esta plataforma?')) return;
+  state.plataformasDelivery = (state.plataformasDelivery || []).filter((_, i) => i !== idx);
+  renderPlataformasDelivery();
+  savePlataformasDelivery();
+}
+
+async function savePlataformasDelivery() {
+  try {
+    await api('PATCH', '/info/plataformas', { plataformas: state.plataformasDelivery });
+    toast('Plataformas guardadas');
   } catch (e) { toast(e.message, 'error'); }
 }
 
@@ -4557,6 +5486,60 @@ async function deleteGasto(id, nombre) {
 // ═══════════════════════════════════════════════════════ PROMOCIONES ═════
 let _promoCache = [];
 
+function switchPromoSection(tab) {
+  document.querySelectorAll('.promo-section-tab').forEach(b => {
+    const isActive = b.id === 'psTab-' + tab;
+    b.style.color = isActive ? 'var(--primary)' : 'var(--muted)';
+    b.style.borderBottomColor = isActive ? 'var(--primary)' : 'transparent';
+    b.style.fontWeight = isActive ? '700' : '600';
+  });
+  document.getElementById('promo-panel-promos').style.display = tab === 'promos' ? '' : 'none';
+  document.getElementById('promo-panel-combos').style.display = tab === 'combos' ? '' : 'none';
+  document.getElementById('btn-nueva-promo').style.display = tab === 'promos' ? '' : 'none';
+  document.getElementById('promo-inactivas-btn').style.display = tab === 'promos' ? '' : 'none';
+  if (tab === 'combos') renderCombosPromo();
+}
+
+function renderCombosPromo() {
+  const wrap = document.getElementById('combos-promo-list');
+  const combos = (state.recetas || state.margenes || []).filter(m => m.categoriaMenu === 'En Promoción' && m.activo !== false);
+  if (!combos.length) {
+    wrap.innerHTML = '<div class="empty-state"><i class="bi bi-box-seam"></i><p>No hay productos con categoría "En Promoción".<br>Agrégalos en Márgenes con esa sección de carta.</p></div>';
+    return;
+  }
+  wrap.innerHTML = `<div class="recipes-grid" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr))">
+    ${combos.map(m => {
+      const mPct = parseFloat(m.margen) || 0;
+      const canales = m.canales || {};
+      const canalRows = (state.plataformasDelivery || [])
+        .filter(p => canales[p.id] != null)
+        .map(p => {
+          const mc = parseFloat(canales[p.id]?.margenCanal) || 0;
+          const cc = canales[p.id]?.costoComision || 0;
+          return `<div style="display:flex;justify-content:space-between;font-size:0.8rem;padding:4px 0;border-top:1px dashed var(--border)">
+            <span style="color:var(--muted)"><i class="bi bi-truck" style="font-size:0.72rem"></i> ${p.nombre} (${p.comision}%)</span>
+            <span style="font-weight:700;color:${marginColor(mc)}">${fmtPct(mc)}</span>
+          </div>`;
+        }).join('');
+      return `<div class="recipe-card">
+        <div class="recipe-card-top">
+          <div class="recipe-card-name">${m.nombre}</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span class="mrg-pill ${mrgPillClass(mPct)}">${fmtPct(mPct)}</span>
+            <button class="btn btn-outline btn-sm btn-icon" onclick="editReceta('${m.id}')" title="Editar"><i class="bi bi-pencil"></i></button>
+          </div>
+        </div>
+        <div class="recipe-card-stats">
+          <div><div class="recipe-stat-label">COSTO</div><div class="recipe-stat-val">$${fmt(m.costoPorcion)}</div></div>
+          <div><div class="recipe-stat-label">VENTA</div><div class="recipe-stat-val">$${fmt(m.precioVenta)}</div></div>
+          <div><div class="recipe-stat-label">ING.</div><div class="recipe-stat-val">${(m.ingredientes||[]).length}</div></div>
+        </div>
+        ${canalRows ? `<div style="margin-top:8px">${canalRows}</div>` : ''}
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
 async function loadPromociones() {
   const wrap = document.getElementById('promociones-list');
   wrap.innerHTML = '<div class="loading-overlay"><div class="spinner spinner-dark"></div></div>';
@@ -4575,7 +5558,8 @@ async function loadPromociones() {
 
 function renderPromociones(list) {
   const wrap = document.getElementById('promociones-list');
-  if (!list.length) {
+  const filtered = _promoShowInactive ? list : list.filter(p => p.activo !== false);
+  if (!filtered.length) {
     wrap.innerHTML = '<div class="empty-state"><i class="bi bi-tags"></i><p>No hay promociones. Crea la primera.</p></div>';
     return;
   }
@@ -4583,6 +5567,8 @@ function renderPromociones(list) {
   const fmtPct = n => n.toFixed(1) + '%';
   const marginColor = m => m >= 70 ? '#1a7a4a' : m >= 50 ? '#b45309' : '#b91c1c';
   const marginBg    = m => m >= 70 ? '#f0fdf4' : m >= 50 ? '#fefce8' : '#fff5f5';
+
+  const recetaMap = Object.fromEntries((state.recetas || []).map(r => [r.id, r]));
 
   wrap.innerHTML = `
     <div class="card" style="padding:0">
@@ -4596,19 +5582,27 @@ function renderPromociones(list) {
               <th style="text-align:right">Ahorro</th>
               <th style="text-align:right">Costo</th>
               <th style="text-align:right">Margen</th>
-              <th style="width:70px"></th>
+              <th style="width:90px"></th>
             </tr>
           </thead>
           <tbody>
-            ${list.map(p => {
+            ${filtered.map(p => {
               const pvNeto = (p.precioVenta || 0) / 1.19;
               const costo  = p.costoTotal || 0;
               const margen = pvNeto > 0 ? ((pvNeto - costo) / pvNeto) * 100 : 0;
-              const precioSep = p.precioSeparado || 0;
-              const ahorro    = precioSep - (p.precioVenta || 0);
-              return `<tr>
+              const precioSep = (p.items || []).reduce((s, i) => {
+                const cant = parseFloat(i.cantidad) || 1;
+                if (i.tipo === 'receta') {
+                  const r = recetaMap[i.refId];
+                  return s + ((r ? r.precioVenta : i.precioUnitario) || 0) * cant;
+                }
+                return s + (parseFloat(i.precioUnitario) || 0) * cant;
+              }, 0);
+              const ahorro = precioSep - (p.precioVenta || 0);
+              const isActivo = p.activo !== false;
+              return `<tr style="${isActivo ? '' : 'opacity:0.45'}">
                 <td>
-                  <strong>${p.nombre}</strong>
+                  <strong>${p.nombre}</strong>${!isActivo ? ' <span style="font-size:10px;color:var(--muted);font-weight:400">(inactiva)</span>' : ''}
                   <div style="font-size:11px;color:var(--muted);margin-top:2px">
                     ${(p.items||[]).map(i => `${i.cantidad > 1 ? i.cantidad+'× ' : ''}${i.nombre}`).join(' · ')}
                   </div>
@@ -4619,10 +5613,15 @@ function renderPromociones(list) {
                 <td style="text-align:right">${fmt(costo)}</td>
                 <td style="text-align:right">
                   <span style="background:${marginBg(margen)};color:${marginColor(margen)};padding:3px 10px;border-radius:20px;font-weight:600;font-size:13px">${fmtPct(margen)}</span>
+                  ${Object.values(p.canales||{}).map(c => {
+                    const mc = c.margenCanal || 0;
+                    const pvCanal = c.precioVenta ? fmt(c.precioVenta) : '';
+                    return `<span class="canal-mrg-chip" style="display:inline-block;margin-top:4px;font-size:10px;background:#e0f2fe;color:#0369a1;padding:2px 7px;border-radius:10px;white-space:nowrap">🚚 ${c.nombre}${pvCanal ? ' '+pvCanal : ''} ${mc.toFixed(1)}%</span>`;
+                  }).join(' ')}
                 </td>
                 <td style="text-align:right">
                   <button class="btn btn-outline btn-sm btn-icon" onclick="openPromoModal('${p.id}')" title="Editar"><i class="bi bi-pencil"></i></button>
-                  <button class="btn btn-outline btn-sm btn-icon" onclick="deletePromo('${p.id}','${p.nombre.replace(/'/g,"&#39;")}')" style="color:var(--danger);margin-left:4px" title="Eliminar"><i class="bi bi-trash"></i></button>
+                  <button class="btn btn-outline btn-sm btn-icon" onclick="togglePromoActivo('${p.id}',${isActivo})" title="${isActivo ? 'Desactivar' : 'Activar'}" style="color:${isActivo ? 'var(--muted)' : 'var(--success)'};margin-left:4px"><i class="bi bi-toggle-${isActivo ? 'on' : 'off'}"></i></button>
                 </td>
               </tr>`;
             }).join('')}
@@ -4632,6 +5631,8 @@ function renderPromociones(list) {
     </div>`;
 }
 
+let _promoCanales = {};
+
 function openPromoModal(id) {
   const p = id ? _promoCache.find(x => x.id === id) : null;
   document.getElementById('modal-promo-title').textContent = p ? 'Editar Promoción' : 'Nueva Promoción';
@@ -4639,9 +5640,149 @@ function openPromoModal(id) {
   document.getElementById('promo-nombre').value = p?.nombre || '';
   document.getElementById('promo-precio').value = p?.precioVenta || '';
   document.getElementById('promo-items-list').innerHTML = '';
+  _promoCanales = p?.canales || {};
   (p?.items || []).forEach(item => addPromoItem(item.tipo, item));
+  renderPromoChannelTabs();
   recalcPromo();
   openModal('modal-promo');
+}
+
+function renderPromoChannelTabs() {
+  const plataformas = state.plataformasDelivery || [];
+  const bar = document.getElementById('promo-channel-tabs-bar');
+  const genDiv = document.getElementById('promo-tab-generico');
+  const platContent = document.getElementById('promo-platform-tabs-content');
+
+  if (!plataformas.length) {
+    bar.style.display = 'none';
+    genDiv.style.display = '';
+    platContent.innerHTML = '';
+    return;
+  }
+
+  bar.style.display = 'flex';
+
+  // Build tab buttons
+  bar.innerHTML = `
+    <button class="drw-channel-tab active" id="promo-tab-btn-generico" onclick="switchPromoTab('generico')" style="padding:6px 14px;border:none;background:none;border-bottom:2px solid var(--primary);color:var(--primary);font-weight:600;cursor:pointer;white-space:nowrap;margin-bottom:-2px">
+      Genérico
+    </button>
+    ${plataformas.map(p => `
+      <button class="drw-channel-tab" id="promo-tab-btn-${p.id}" onclick="switchPromoTab('${p.id}')" style="padding:6px 14px;border:none;background:none;border-bottom:2px solid transparent;color:#6c757d;cursor:pointer;white-space:nowrap;margin-bottom:-2px">
+        ${p.nombre}
+      </button>
+    `).join('')}
+  `;
+
+  // Build platform panels
+  platContent.innerHTML = plataformas.map(p => {
+    const saved = _promoCanales[p.id] || {};
+    const savedPrecio = saved.precioVenta || '';
+    return `
+      <div id="promo-panel-${p.id}" style="display:none">
+        <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#856404">
+          <strong>${p.nombre}</strong> — Comisión ${p.comision}%
+        </div>
+        <div style="margin-bottom:12px">
+          <label class="form-label" style="font-size:12px">Precio de venta en ${p.nombre}</label>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input type="number" id="promo-canal-precio-${p.id}" class="form-control" style="max-width:200px"
+              placeholder="Deja vacío para usar el precio genérico"
+              value="${savedPrecio}" min="0" step="1"
+              oninput="recalcPromoCanal('${p.id}')" />
+            <span id="promo-canal-precio-hint-${p.id}" style="font-size:11px;color:#6c757d"></span>
+          </div>
+        </div>
+        <div id="promo-canal-preview-${p.id}" style="background:#f8f9fa;border-radius:10px;padding:14px;font-size:13px"></div>
+      </div>
+    `;
+  }).join('');
+
+  // After rendering, trigger recalc for each canal
+  plataformas.forEach(p => recalcPromoCanal(p.id));
+}
+
+function switchPromoTab(tabId) {
+  const plataformas = state.plataformasDelivery || [];
+  // Update tab buttons
+  document.getElementById('promo-tab-btn-generico')?.classList.toggle('active', tabId === 'generico');
+  document.getElementById('promo-tab-generico').style.display = tabId === 'generico' ? '' : 'none';
+  plataformas.forEach(p => {
+    const btn = document.getElementById(`promo-tab-btn-${p.id}`);
+    const panel = document.getElementById(`promo-panel-${p.id}`);
+    if (btn) {
+      const isActive = p.id === tabId;
+      btn.style.borderBottomColor = isActive ? 'var(--primary)' : 'transparent';
+      btn.style.color = isActive ? 'var(--primary)' : '#6c757d';
+      btn.style.fontWeight = isActive ? '600' : '400';
+    }
+    if (panel) panel.style.display = p.id === tabId ? '' : 'none';
+  });
+  // Also fix genérico tab style
+  const genBtn = document.getElementById('promo-tab-btn-generico');
+  if (genBtn) {
+    const isGen = tabId === 'generico';
+    genBtn.style.borderBottomColor = isGen ? 'var(--primary)' : 'transparent';
+    genBtn.style.color = isGen ? 'var(--primary)' : '#6c757d';
+    genBtn.style.fontWeight = isGen ? '600' : '400';
+  }
+}
+
+function getPromoCostoTotal() {
+  let costoTotal = 0;
+  document.querySelectorAll('#promo-items-list > div').forEach(row => {
+    const sel  = row.querySelector('.promo-item-sel');
+    const cant = parseFloat(row.querySelector('.promo-item-cant')?.value) || 1;
+    const opt  = sel?.selectedOptions[0];
+    if (opt?.value) costoTotal += (parseFloat(opt.dataset.costo) || 0) * cant;
+  });
+  return costoTotal;
+}
+
+function recalcPromoCanal(canalId) {
+  const fmt = n => '$' + Math.round(n).toLocaleString('es-CL');
+  const plataforma = (state.plataformasDelivery || []).find(p => p.id === canalId);
+  if (!plataforma) return;
+
+  const costoTotal = getPromoCostoTotal();
+  const precioGenerico = parseFloat(document.getElementById('promo-precio')?.value) || 0;
+  const precioInputCanal = parseFloat(document.getElementById(`promo-canal-precio-${canalId}`)?.value) || 0;
+  const precio = precioInputCanal > 0 ? precioInputCanal : precioGenerico;
+
+  const hint = document.getElementById(`promo-canal-precio-hint-${canalId}`);
+  if (hint) hint.textContent = precioInputCanal > 0 ? '' : `(usando precio genérico ${fmt(precioGenerico)})`;
+
+  const costoComision = (plataforma.comision / 100) * precio;
+  const costoTotalCanal = costoTotal + costoComision;
+  const pvNeto = precio / 1.19;
+  const margenCanal = pvNeto > 0 ? ((pvNeto - costoTotalCanal) / pvNeto) * 100 : 0;
+  const color = margenCanal >= 60 ? '#166534' : margenCanal >= 40 ? '#92400e' : '#b91c1c';
+
+  const preview = document.getElementById(`promo-canal-preview-${canalId}`);
+  if (!preview) return;
+  preview.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px">
+      <div style="background:#fff;border-radius:8px;padding:10px 12px;border:1px solid #e9ecef">
+        <div style="font-size:10px;color:#6c757d;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Costo base</div>
+        <div style="font-size:16px;font-weight:700;color:#212529">${fmt(costoTotal)}</div>
+      </div>
+      <div style="background:#fff;border-radius:8px;padding:10px 12px;border:1px solid #e9ecef">
+        <div style="font-size:10px;color:#6c757d;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Comisión (${plataforma.comision}%)</div>
+        <div style="font-size:16px;font-weight:700;color:#dc3545">${fmt(costoComision)}</div>
+      </div>
+      <div style="background:#fff;border-radius:8px;padding:10px 12px;border:1px solid #e9ecef">
+        <div style="font-size:10px;color:#6c757d;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Costo total canal</div>
+        <div style="font-size:16px;font-weight:700;color:#212529">${fmt(costoTotalCanal)}</div>
+      </div>
+      <div style="background:#fff;border-radius:8px;padding:10px 12px;border:1px solid #e9ecef">
+        <div style="font-size:10px;color:#6c757d;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Precio venta</div>
+        <div style="font-size:16px;font-weight:700;color:#212529">${precio ? fmt(precio) : '—'}</div>
+      </div>
+      <div style="background:#fff;border-radius:8px;padding:10px 12px;border:1px solid #e9ecef">
+        <div style="font-size:10px;color:#6c757d;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Margen canal</div>
+        <div style="font-size:16px;font-weight:700;color:${color}">${precio ? margenCanal.toFixed(1) + '%' : '—'}</div>
+      </div>
+    </div>`;
 }
 
 function addPromoItem(tipo, data) {
@@ -4654,18 +5795,32 @@ function addPromoItem(tipo, data) {
   ).join('');
   row.innerHTML = `
     <span style="font-size:11px;font-weight:600;color:${tipo==='receta'?'#0ea5e9':'#9c27b0'};background:${tipo==='receta'?'rgba(14,165,233,0.1)':'rgba(156,39,176,0.1)'};padding:2px 8px;border-radius:12px;white-space:nowrap">${tipo === 'receta' ? 'Receta' : 'Preparación'}</span>
-    <select class="form-control promo-item-sel" data-tipo="${tipo}" style="flex:1" onchange="recalcPromo()">
+    <select class="form-control promo-item-sel" data-tipo="${tipo}" style="flex:1" onchange="updatePromoItemPrice(this);recalcPromo()">
       <option value="">— Seleccionar —</option>
       ${options}
     </select>
-    <input type="number" class="form-control promo-item-cant" min="1" step="1" value="${data?.cantidad || 1}" style="width:70px" oninput="recalcPromo()" />
+    <span class="promo-item-price" style="font-size:13px;font-weight:600;color:#212529;white-space:nowrap;min-width:70px;text-align:right">—</span>
+    <input type="number" class="form-control promo-item-cant" min="1" step="1" value="${data?.cantidad || 1}" style="width:70px" oninput="updatePromoItemPrice(this.closest('div').querySelector('.promo-item-sel'));recalcPromo()" />
     <button class="btn btn-outline btn-sm btn-icon" onclick="this.parentElement.remove();recalcPromo()" style="color:var(--danger)"><i class="bi bi-x"></i></button>`;
   if (data?.refId) {
-    // pre-select
-    setTimeout(() => { const sel = row.querySelector('.promo-item-sel'); if (sel) { sel.value = data.refId; recalcPromo(); } }, 0);
+    setTimeout(() => {
+      const sel = row.querySelector('.promo-item-sel');
+      if (sel) { sel.value = data.refId; updatePromoItemPrice(sel); recalcPromo(); }
+    }, 0);
   }
   list.appendChild(row);
   recalcPromo();
+}
+
+function updatePromoItemPrice(sel) {
+  const fmt = n => '$' + Math.round(n).toLocaleString('es-CL');
+  const row = sel?.closest('div');
+  if (!row) return;
+  const opt  = sel.selectedOptions[0];
+  const cant = parseFloat(row.querySelector('.promo-item-cant')?.value) || 1;
+  const precio = parseFloat(opt?.dataset.precio) || 0;
+  const span = row.querySelector('.promo-item-price');
+  if (span) span.textContent = opt?.value && precio ? fmt(precio * cant) : '—';
 }
 
 function recalcPromo() {
@@ -4703,6 +5858,8 @@ function recalcPromo() {
         <div style="font-size:16px;font-weight:700;color:${color}">${pv ? margen.toFixed(1) + '%' : '—'}</div>
       </div>
     </div>`;
+  // Recalc all platform canales
+  (state.plataformasDelivery || []).forEach(p => recalcPromoCanal(p.id));
 }
 
 async function savePromo() {
@@ -4713,23 +5870,45 @@ async function savePromo() {
 
   const items = [];
   let ok = true;
+  let costoTotal = 0;
   document.querySelectorAll('#promo-items-list > div').forEach(row => {
     const sel  = row.querySelector('.promo-item-sel');
     const tipo = sel?.dataset.tipo;
     const cant = parseFloat(row.querySelector('.promo-item-cant')?.value) || 1;
     const opt  = sel?.selectedOptions[0];
     if (!opt?.value) { ok = false; return; }
+    const costoUnit = parseFloat(opt.dataset.costo) || 0;
+    costoTotal += costoUnit * cant;
     items.push({
       tipo, refId: opt.value, cantidad: cant,
       nombre: opt.dataset.nombre || opt.text,
-      costoUnitario: parseFloat(opt.dataset.costo) || 0,
+      costoUnitario: costoUnit,
       precioUnitario: parseFloat(opt.dataset.precio) || 0
     });
   });
   if (!ok || !items.length) { toast('Agrega al menos un ítem válido', 'error'); return; }
 
+  // Collect canales
+  const canales = {};
+  (state.plataformasDelivery || []).forEach(p => {
+    const precioInputCanal = parseFloat(document.getElementById(`promo-canal-precio-${p.id}`)?.value) || 0;
+    const precioCanal = precioInputCanal > 0 ? precioInputCanal : pv;
+    const costoComision = (p.comision / 100) * precioCanal;
+    const costoTotalCanal = costoTotal + costoComision;
+    const pvNeto = precioCanal / 1.19;
+    const margenCanal = pvNeto > 0 ? ((pvNeto - costoTotalCanal) / pvNeto) * 100 : 0;
+    canales[p.id] = {
+      nombre: p.nombre,
+      comision: p.comision,
+      precioVenta: precioInputCanal > 0 ? precioInputCanal : null,
+      costoComision,
+      costoTotalCanal,
+      margenCanal,
+    };
+  });
+
   const id = document.getElementById('promo-id').value;
-  const body = { nombre, precioVenta: pv, items };
+  const body = { nombre, precioVenta: pv, items, canales };
   try {
     if (id) await api('PUT', '/promociones/' + id, body);
     else     await api('POST', '/promociones', body);

@@ -532,6 +532,32 @@ app.delete('/api/inventarios/:id', requireAuth, async (req, res) => {
 });
 
 // ─── HELPERS CASCADA ──────────────────────────────────────────────────────────
+
+async function cascadeToPromociones(req, margenUpdates, prepUpdates) {
+  if (!Object.keys(margenUpdates).length && !Object.keys(prepUpdates).length) return;
+  const promosSnap = await col(req, 'promociones').get();
+  const batch = db.batch();
+  let updated = false;
+  for (const doc of promosSnap.docs) {
+    const promo = doc.data();
+    const items = promo.items || [];
+    const affected = items.some(i =>
+      (i.tipo === 'receta' && margenUpdates[i.refId] !== undefined) ||
+      (i.tipo === 'preparacion' && prepUpdates[i.refId] !== undefined)
+    );
+    if (!affected) continue;
+    const updatedItems = items.map(i => {
+      if (i.tipo === 'receta' && margenUpdates[i.refId] !== undefined) return { ...i, costoUnitario: margenUpdates[i.refId] };
+      if (i.tipo === 'preparacion' && prepUpdates[i.refId] !== undefined) return { ...i, costoUnitario: prepUpdates[i.refId] };
+      return i;
+    });
+    const { costoTotal, precioSeparado, margen } = calcularPromo(updatedItems, promo.precioVenta);
+    batch.update(doc.ref, { items: updatedItems, costoTotal, precioSeparado, margen, actualizadoEn: TS() });
+    updated = true;
+  }
+  if (updated) await batch.commit();
+}
+
 async function cascadeIngredienteCosto(req, ingredienteId, nuevoCosto) {
   // Update preparaciones that use this ingredient
   const prepsSnap = await col(req, 'preparaciones').get();
@@ -551,6 +577,7 @@ async function cascadeIngredienteCosto(req, ingredienteId, nuevoCosto) {
   // Update margenes that use this ingredient directly OR the updated preparations
   const margenesSnap = await col(req, 'margenes').get();
   const batch2 = db.batch();
+  const margenUpdates = {}; // margenId → new costoPorcion
   for (const doc of margenesSnap.docs) {
     const receta = doc.data();
     const ings = receta.ingredientes || [];
@@ -566,8 +593,12 @@ async function cascadeIngredienteCosto(req, ingredienteId, nuevoCosto) {
     });
     const { costoTotal, costoPorcion, margen } = calcularMargen(updatedIngs, receta.porciones, receta.precioVenta);
     batch2.update(doc.ref, { ingredientes: updatedIngs, costoTotal, costoPorcion, margen, actualizadoEn: TS() });
+    margenUpdates[doc.id] = costoPorcion;
   }
   await batch2.commit();
+
+  // Cascade también a promociones
+  await cascadeToPromociones(req, margenUpdates, prepUpdates);
 }
 
 // ─── MÁRGENES ─────────────────────────────────────────────────────────────────
@@ -648,6 +679,7 @@ app.put('/api/preparaciones/:id', requireAuth, async (req, res) => {
     // Cascade: update all recetas (margenes) that use this preparation
     const margenesSnap = await col(req, 'margenes').get();
     const batch = db.batch();
+    const margenUpdates = {};
     for (const doc of margenesSnap.docs) {
       const receta = doc.data();
       const ings = receta.ingredientes || [];
@@ -660,8 +692,12 @@ app.put('/api/preparaciones/:id', requireAuth, async (req, res) => {
       );
       const { costoTotal: ct, costoPorcion: cp, margen: mg } = calcularMargen(updatedIngs, receta.porciones, receta.precioVenta);
       batch.update(doc.ref, { ingredientes: updatedIngs, costoTotal: ct, costoPorcion: cp, margen: mg, actualizadoEn: TS() });
+      margenUpdates[doc.id] = cp;
     }
     await batch.commit();
+
+    // Cascade también a promociones
+    await cascadeToPromociones(req, margenUpdates, { [req.params.id]: costoPorUnidad });
 
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -683,7 +719,7 @@ app.get('/api/margenes', requireAuth, async (req, res) => {
 
 app.post('/api/margenes', requireAuth, async (req, res) => {
   try {
-    const { nombre, categoria, precioVenta, ingredientes, porciones, notas, categoriaMenuId, categoriaMenu } = req.body;
+    const { nombre, categoria, precioVenta, ingredientes, porciones, notas, categoriaMenuId, categoriaMenu, canales } = req.body;
     const pv = parseFloat(precioVenta) || 0;
     const { costoTotal, costoPorcion, margen } = calcularMargen(ingredientes, porciones, pv);
 
@@ -699,6 +735,7 @@ app.post('/api/margenes', requireAuth, async (req, res) => {
       notas: notas || '',
       categoriaMenuId: categoriaMenuId || '',
       categoriaMenu: categoriaMenu || '',
+      canales: canales || {},
       creadoEn: TS(),
       actualizadoEn: TS()
     };
@@ -709,7 +746,7 @@ app.post('/api/margenes', requireAuth, async (req, res) => {
 
 app.put('/api/margenes/:id', requireAuth, async (req, res) => {
   try {
-    const { nombre, categoria, precioVenta, ingredientes, porciones, notas, categoriaMenuId, categoriaMenu } = req.body;
+    const { nombre, categoria, precioVenta, ingredientes, porciones, notas, categoriaMenuId, categoriaMenu, canales } = req.body;
     const pv = parseFloat(precioVenta) || 0;
     const { costoTotal, costoPorcion, margen } = calcularMargen(ingredientes, porciones, pv);
 
@@ -725,8 +762,17 @@ app.put('/api/margenes/:id', requireAuth, async (req, res) => {
       notas: notas || '',
       categoriaMenuId: categoriaMenuId || '',
       categoriaMenu: categoriaMenu || '',
+      canales: canales || {},
       actualizadoEn: TS()
     });
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.patch('/api/margenes/:id/activo', requireAuth, async (req, res) => {
+  try {
+    const activo = req.body.activo !== false;
+    await col(req, 'margenes').doc(req.params.id).update({ activo, actualizadoEn: TS() });
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -938,11 +984,12 @@ app.get('/api/promociones', requireAuth, async (req, res) => {
 
 app.post('/api/promociones', requireAuth, async (req, res) => {
   try {
-    const { nombre, precioVenta, items } = req.body;
+    const { nombre, precioVenta, items, canales } = req.body;
     const { costoTotal, precioSeparado, margen } = calcularPromo(items, precioVenta);
     const ref = await col(req, 'promociones').add({
       nombre: nombre?.trim(), precioVenta: parseFloat(precioVenta) || 0,
       items: items || [], costoTotal, precioSeparado, margen,
+      canales: canales || {},
       creadoEn: TS(), actualizadoEn: TS()
     });
     res.json({ id: ref.id });
@@ -951,13 +998,22 @@ app.post('/api/promociones', requireAuth, async (req, res) => {
 
 app.put('/api/promociones/:id', requireAuth, async (req, res) => {
   try {
-    const { nombre, precioVenta, items } = req.body;
+    const { nombre, precioVenta, items, canales } = req.body;
     const { costoTotal, precioSeparado, margen } = calcularPromo(items, precioVenta);
     await col(req, 'promociones').doc(req.params.id).update({
       nombre: nombre?.trim(), precioVenta: parseFloat(precioVenta) || 0,
       items: items || [], costoTotal, precioSeparado, margen,
+      canales: canales || {},
       actualizadoEn: TS()
     });
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.patch('/api/promociones/:id/activo', requireAuth, async (req, res) => {
+  try {
+    const activo = req.body.activo !== false;
+    await col(req, 'promociones').doc(req.params.id).update({ activo, actualizadoEn: TS() });
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -1050,6 +1106,16 @@ app.put('/api/info', requireAuth, async (req, res) => {
       actualizadoEn: TS()
     };
     await db.collection('clientes').doc(req.clienteId).collection('info').doc('restaurante').set(data, { merge: true });
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.patch('/api/info/plataformas', requireAuth, async (req, res) => {
+  try {
+    const plataformas = Array.isArray(req.body.plataformas) ? req.body.plataformas : [];
+    await db.collection('clientes').doc(req.clienteId).collection('info').doc('restaurante').set(
+      { plataformasDelivery: plataformas, actualizadoEn: TS() }, { merge: true }
+    );
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
